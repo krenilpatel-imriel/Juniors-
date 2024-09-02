@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { FileResponse } from 'src/app/Models/fileResponseModel';
+import data from 'src/app/Models/reponse.json';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -22,7 +24,7 @@ import {
   templateUrl: './insights.component.html',
   styleUrls: ['./insights.component.scss']
 })
-export class InsightsComponent implements OnInit {
+export class InsightsComponent {
 
  // KPI Data
  totalFilesProcessed = 150;
@@ -47,13 +49,109 @@ export class InsightsComponent implements OnInit {
  expenseAnomalies: any;
  expenseForecasting: any;
 
+ // Chart Data
+ pdfResponse!: FileResponse;
+ confidenceChart: any;
+ invoiceDistributionChart: any;
+ amountInWordsChart: any;
+
  constructor() {
    this.initializeCharts();
  }
 
- ngOnInit(): void {}
+ ngOnInit(): void {
+ }
 
  initializeCharts() {
+
+  this.pdfResponse = data;
+  console.log(this.pdfResponse);
+
+  const confidenceData = this.pdfResponse.PdfValues.map(item => item.Confidence);
+  const confidenceLabels = this.pdfResponse.PdfValues.map(item => item.FieldName);
+
+  this.confidenceChart = {
+    series: [{
+      name: 'Confidence Level',
+      data: confidenceData
+    }],
+    chart: {
+      type: 'bar',
+      height: 350
+    },
+    xaxis: {
+      categories: confidenceLabels
+    },
+    title: {
+      text: 'Confidence Levels by Field'
+    }
+  };
+
+  // // Initialize Invoice Amount Distribution Chart
+
+  const invoiceValues = this.pdfResponse.Tables.filter(t => t.TableNumber === 1).flatMap(c => c.Cells.filter(cell => cell.RowIndex === 1).map(cell => parseFloat(cell.Content.replace(/₹|,/g, ''))).filter(value => !isNaN(value)));
+  const invoiceCategories = ['Net Amount', 'Tax Amount', 'Total Amount'];
+
+  this.invoiceDistributionChart = {
+    series: [
+      // name: 'Invoice Amount',
+      ...invoiceValues
+    ],
+    chart: {
+      type: 'pie',
+      height: 350
+    },
+    labels: invoiceCategories,
+    title: {
+      text: 'Invoice Amount Distribution'
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 200
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    ]
+  };
+
+  // // Initialize Amount in Words Confidence Chart
+  const amountInWordsData = this.pdfResponse.PdfValues.filter(item => item.FieldName === 'AmountInWords').map(item => item.Confidence);
+  
+  this.amountInWordsChart = {
+    series: [
+      // name: 'Confidence',
+      ...amountInWordsData
+    ],
+    chart: {
+      type: 'radialBar',
+      height: 350
+    },
+    labels: ['Paid'],
+    title: {
+      text: 'Confidence Level for Amount in Words'
+    }
+  };
+
+  this.paidUnpaidInvoices = {
+    series: [60, 40],
+    chart: {
+      type: 'radialBar',
+      height: 350
+    },
+    labels: ['Paid', 'Unpaid'],
+    title: {
+      text: 'Paid vs. Unpaid Invoices'
+    }
+  };
+
+
+
    this.processingSuccessFail = {
      series: [this.successfulFiles, this.failedFiles],
      chart: {

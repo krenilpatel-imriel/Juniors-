@@ -15,6 +15,7 @@ import { DocumentationComponent } from './dashboard-Managment/documentation/docu
 import { InsightsComponent } from './dashboard-Managment/insights/insights.component';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -34,7 +35,8 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
     BrowserModule,
     AppRoutingModule,
     FontAwesomeModule,
-    NgApexchartsModule
+    NgApexchartsModule,
+    HttpClientModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [],
