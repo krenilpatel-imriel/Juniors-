@@ -1,0 +1,329 @@
+{
+  "PdfValues": [
+    {
+      "FieldName": "BillType",
+      "FieldValue": "Tax Invoice/Bill of Supply/Cash Memo",
+      "Confidence": 94.6
+    },
+    {
+      "FieldName": "SoldByName",
+      "FieldValue": "REDTAPE LIMITED",
+      "Confidence": 86.8
+    },
+    {
+      "FieldName": "SellerAddr1",
+      "FieldValue": "Red Tape_UnnaoWAREHOUSE U-5 INFRONT",
+      "Confidence": 25.7
+    },
+    {
+      "FieldName": "SellerAddr2",
+      "FieldValue": "INDUSTRIAL AREA,,",
+      "Confidence": 70.8
+    },
+    {
+      "FieldName": "SellerAddr3",
+      "FieldValue": "SITE - II BY PASS,",
+      "Confidence": 45.4
+    },
+    { "FieldName": "SellerCity", "FieldValue": "Unnao,", "Confidence": 86.5 },
+    {
+      "FieldName": "SellerState",
+      "FieldValue": "Uttar Pradesh,",
+      "Confidence": 90.0
+    },
+    {
+      "FieldName": "SellerPinCode",
+      "FieldValue": "209801",
+      "Confidence": 87.5
+    },
+    { "FieldName": "SellerCountry", "FieldValue": "IN", "Confidence": 92.0 },
+    {
+      "FieldName": "SellerPanNo",
+      "FieldValue": "AALCR5032R",
+      "Confidence": 95.8
+    },
+    {
+      "FieldName": "SellerGSTNo",
+      "FieldValue": "09AALCR5032R1ZN",
+      "Confidence": 94.4
+    },
+    {
+      "FieldName": "OrderNo",
+      "FieldValue": "171-7520048-1020311",
+      "Confidence": 98.2
+    },
+    {
+      "FieldName": "OrderDate",
+      "FieldValue": "23.08.2024",
+      "Confidence": 98.3
+    },
+    {
+      "FieldName": "BillToName",
+      "FieldValue": "Naqeebkhan Sherani",
+      "Confidence": 91.8
+    },
+    {
+      "FieldName": "BillToAddr1",
+      "FieldValue": "B-1 Muzammil Park Society Nr Chistiya Masjid,",
+      "Confidence": 71.4
+    },
+    {
+      "FieldName": "BillToAddr2",
+      "FieldValue": "Tandalja Road,",
+      "Confidence": 81.3
+    },
+    {
+      "FieldName": "BillToAddr3",
+      "FieldValue": "Tandlaja",
+      "Confidence": 88.1
+    },
+    {
+      "FieldName": "BillToCity",
+      "FieldValue": "VADODARA,",
+      "Confidence": 94.8
+    },
+    {
+      "FieldName": "BillToState",
+      "FieldValue": "GUJARAT,",
+      "Confidence": 92.2
+    },
+    {
+      "FieldName": "BillToPinCode",
+      "FieldValue": "390020",
+      "Confidence": 96.0
+    },
+    { "FieldName": "BillToCountry", "FieldValue": "IN", "Confidence": 92.1 },
+    { "FieldName": "BillToStateCode", "FieldValue": "24", "Confidence": 84.0 },
+    {
+      "FieldName": "ShipToAddr1",
+      "FieldValue": "Nr Chistiya Masjid,",
+      "Confidence": 24.7
+    },
+    {
+      "FieldName": "ShipToName",
+      "FieldValue": "Naqeebkhan Sherani Naqeebkhan Sherani",
+      "Confidence": 63.1
+    },
+    {
+      "FieldName": "ShipToAddr2",
+      "FieldValue": "B-1 Muzammil Park Society",
+      "Confidence": 8.2
+    },
+    {
+      "FieldName": "ShipToAddr3",
+      "FieldValue": "Tandalja Road, Tandlaja",
+      "Confidence": 85.6
+    },
+    {
+      "FieldName": "ShipToCity",
+      "FieldValue": "VADODARA,",
+      "Confidence": 95.7
+    },
+    {
+      "FieldName": "ShipToState",
+      "FieldValue": "GUJARAT,",
+      "Confidence": 94.8
+    },
+    {
+      "FieldName": "ShipToPinCode",
+      "FieldValue": "390020",
+      "Confidence": 95.7
+    },
+    { "FieldName": "ShipToCountry", "FieldValue": "IN", "Confidence": 94.8 },
+    { "FieldName": "ShipToStateCode", "FieldValue": "24", "Confidence": 93.9 },
+    {
+      "FieldName": "SupplyLocation",
+      "FieldValue": "GUJARAT",
+      "Confidence": 94.8
+    },
+    {
+      "FieldName": "DeliveryLocation",
+      "FieldValue": "GUJARAT",
+      "Confidence": 95.8
+    },
+    {
+      "FieldName": "InvoiceNo",
+      "FieldValue": "UNNA-150473",
+      "Confidence": 98.3
+    },
+    {
+      "FieldName": "InvoiceDescription",
+      "FieldValue": "UP-a1425b15-7cf8-438f-a3fd-186499bb2fe2-120813473-2425",
+      "Confidence": 98.3
+    },
+    {
+      "FieldName": "InvoiceDate",
+      "FieldValue": "23.08.2024",
+      "Confidence": 98.3
+    },
+    {
+      "FieldName": "TotalTaxAmount",
+      "FieldValue": "₹60.84",
+      "Confidence": 97.6
+    },
+    { "FieldName": "GrandTotal", "FieldValue": "₹567.80", "Confidence": 96.5 },
+    {
+      "FieldName": "AmountInWords",
+      "FieldValue": "Five Hundred Sixty-seven Point Eight only",
+      "Confidence": 85.5
+    },
+    { "FieldName": "InvoiceValue", "FieldValue": "567.80", "Confidence": 70.9 },
+    { "FieldName": "OrderItem", "FieldValue": null, "Confidence": 0.0 },
+    { "FieldName": "PaymentTable", "FieldValue": null, "Confidence": 0.0 },
+    { "FieldName": "BillToGSTNo", "FieldValue": null, "Confidence": 88.7 }
+  ],
+  "Tables": [
+    {
+      "TableNumber": 1,
+      "Cells": [
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 0,
+          "Content": "Sl. No",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 1,
+          "Content": "Description",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 2,
+          "Content": "Unit Price",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 3,
+          "Content": "Qty",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 4,
+          "Content": "Amount\nNet",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 5,
+          "Content": "Rate\nTax",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 6,
+          "Content": "Type\nTax",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 7,
+          "Content": "Amount\nTax",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 8,
+          "Content": "Amount\nTotal",
+          "Kind": "columnHeader"
+        },
+        { "RowIndex": 1, "ColumnIndex": 0, "Content": "1", "Kind": "content" },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 1,
+          "Content": "Red Tape Casual Sliders for Men | Refined Round-Toe Shape with a Relaxing Slip-On Support | B0D31NF3KC ( RFF1221-10 ) HSN:64022090",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 2,
+          "Content": "₹506.96",
+          "Kind": "content"
+        },
+        { "RowIndex": 1, "ColumnIndex": 3, "Content": "1", "Kind": "content" },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 4,
+          "Content": "₹506.96",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 5,
+          "Content": "12%",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 6,
+          "Content": "IGST",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 7,
+          "Content": "₹60.84",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 8,
+          "Content": "₹567.80",
+          "Kind": "content"
+        }
+      ]
+    },
+    {
+      "TableNumber": 2,
+      "Cells": [
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 0,
+          "Content": "Payment Transaction ID:",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 1,
+          "Content": "Date & Time: 23/08/2024, 00:09:19",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 2,
+          "Content": "Invoice Value:",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 0,
+          "ColumnIndex": 3,
+          "Content": "Mode of Payment:",
+          "Kind": "columnHeader"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 0,
+          "Content": "BlslygGRRV8VNQTeFimYpMbQqxjGEMcrcq1",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 1,
+          "Content": "hrs",
+          "Kind": "content"
+        },
+        {
+          "RowIndex": 1,
+          "ColumnIndex": 2,
+          "Content": "567.80",
+          "Kind": "content"
+        },
+        { "RowIndex": 1, "ColumnIndex": 3, "Content": "UPI", "Kind": "content" }
+      ]
+    }
+  ],
+  "FileName": 0
+}
