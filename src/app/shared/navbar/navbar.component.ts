@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { faUserCircle, faCaretDown, faBars } from '@fortawesome/free-solid-svg-icons';
+import { gsap } from 'gsap';
 
 
 @Component({
@@ -15,6 +16,7 @@ export class NavbarComponent {
   constructor(private rotuer: Router){
 
   }
+
 
 navigateToContact(){
   this.rotuer.navigate(['/contact']);
