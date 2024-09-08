@@ -1,5 +1,7 @@
+import { FileResponse } from 'src/app/Models/fileResponseModel';
 import { Component, OnInit } from '@angular/core';
 import { FileUploadService } from 'src/app/services/fileUpload.service';
+import { FileRequestModel } from 'src/app/Models/fileRequestModel';
 
 @Component({
   selector: 'app-pdf-uploader',
@@ -8,6 +10,7 @@ import { FileUploadService } from 'src/app/services/fileUpload.service';
 })
 export class PDFUploaderComponent implements OnInit  {
   files: File[] = [];
+  pdfResponse!: FileResponse;
 
   constructor(private fileService: FileUploadService) { }
 
@@ -20,20 +23,38 @@ export class PDFUploaderComponent implements OnInit  {
     const selectedFiles = Array.from(event.target.files) as File[];
 
     for (const file of selectedFiles) {
-      await this.fileService.addFile(file);
+      var result = await this.fileService.addFile(file);
+      if(result == 0) return;
+      
       this.files.push(file);
 
       reader.onload = async (e: any) => {
         let base64String = e.target.result;
-        console.log(base64String);
+        const cleanBase64 = base64String.split(',')[1];
+        console.log(cleanBase64);
+
+
+      const data : FileRequestModel = {
+        FileName: file.name,
+        Base64String: cleanBase64
+      }
 
       // Calling backend api to upload files in Azure AI service
-      // const response = await this.fileService.uploadFile(file.name, base64String);
-      // console.log(response);
+      this.fileService.uploadFile(data).subscribe((response:any)=>{
+        console.log(response);
+        this.pdfResponse = response;
+        this.addFileToDb(this.pdfResponse);
+      });
       }
 
       reader.readAsDataURL(file);
     }
+  }
+
+  addFileToDb(file: FileResponse){
+    this.fileService.addFileContentsToDB(file).subscribe((data:any)=>{
+      console.log(data);
+    });
   }
 
   async removeFile(file: File) {

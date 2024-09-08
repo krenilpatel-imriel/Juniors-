@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { FileRequestModel } from '../Models/fileRequestModel';
+import { FileResponse } from '../Models/fileResponseModel';
 
 @Injectable({
   providedIn: 'root'
@@ -11,16 +13,28 @@ export class FileUploadService {
   apiBaseUrl: any;
 
   constructor(private httpClient: HttpClient) {
-    this.apiBaseUrl = 'http://localhost:3000';
+    this.apiBaseUrl = 'https://localhost:7035/api/Data';
     this.dbPromise = this.createDatabase();
   }
 
-  async uploadFile(base64: any): Promise<any>{
-    return this.httpClient.post(
-      `${this.apiBaseUrl}${'/uploadFiles'}`,
-      {
-        file: base64,
-      }
+  uploadFile(data: FileRequestModel): any{
+    console.log(data);
+    return this.httpClient.post<FileRequestModel>(
+      `${this.apiBaseUrl}${'/GetPdfValuesbyPdf'}`,
+        data
+    );
+  }
+
+  addFileContentsToDB(file: FileResponse): any {
+    return this.httpClient.post<FileResponse>(
+      `${this.apiBaseUrl}`,
+        file
+    );
+  }
+
+  getDataFromDB(): any {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}`
     );
   }
 
@@ -32,9 +46,15 @@ export class FileUploadService {
     });
   }
 
-  async addFile(file: File): Promise<void> {
+  async addFile(file: File): Promise<any> {
     const db = await this.dbPromise;
-    await db.put('files', file);
+    var fileExists = db.get('files', file.name);
+    console.log(fileExists);
+    if (await fileExists) {
+      alert('A file with this name already exists. Please select another file..!');
+      return 0;
+    }
+      await db.put('files', file);
   }
 
   async getAllFiles(): Promise<File[]> {
