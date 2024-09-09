@@ -30,8 +30,8 @@ export class InsightsComponent {
  totalFilesProcessed = 150;
  successfulFiles = 140;
  failedFiles = 10;
- totalExpenses = 85000;
- averageInvoiceAmount = 567.89;
+ totalExpenses = 0;
+ averageInvoiceAmount = 0;
 
  // Chart Data
  processingSuccessFail: any;
@@ -84,13 +84,19 @@ invoiceCountsByDate: { [key: string]: number } = {};
       if (value !== null) {
         switch (field) {
           case 'GrandTotal':
-            extractedRow.GrandTotal = parseFloat(value.replace(/₹|,/g, '')); // Removing currency symbols
+
+const parsedValue = parseFloat(value.replace(/₹|,/g, ''));
+extractedRow.GrandTotal = parseFloat(parsedValue.toFixed(2));
+ // Removing currency symbols
             break;
           case 'OrderDate':
             extractedRow.OrderDate = value.replace('Date:', '');
             break;
           case 'BillToName':
             extractedRow.BillToName = value;
+            break;
+            case 'SoldByName':
+            extractedRow.SoldByName = value;
             break;
           case 'OrderNo':
             extractedRow.OrderNo = value;
@@ -101,8 +107,11 @@ invoiceCountsByDate: { [key: string]: number } = {};
 
     // Push the extracted row to the array
     this.extractedData.push(extractedRow);
+    this.totalFilesProcessed = this.extractedData.length;
 
-
+    this.totalFilesProcessed = this.totalFilesProcessed;
+   this.successfulFiles = this.totalFilesProcessed;;
+  this.failedFiles = 0;
   });
 }
 
@@ -110,6 +119,12 @@ calculateTotalGrandTotal() {
   this.totalGrandTotal = this.extractedData.reduce((total, row) => {
     return total + (row.GrandTotal || 0);
   }, 0);
+
+this.totalExpenses = parseFloat(this.totalGrandTotal.toFixed(2));
+
+  this.averageInvoiceAmount = parseFloat((this.totalGrandTotal / this.totalFilesProcessed).toFixed(2));
+
+
 }
 
 formatDateForChart(date: Date): string {
@@ -185,62 +200,51 @@ this.extractedData.sort((a, b) => {
     }
   };
 
-  // // Initialize Invoice Amount Distribution Chart
+// Extract TotalTaxAmount and GrandTotal from the PdfResponse
+const invoiceValues = this.pdfResponse
+  .flatMap(j =>
+    j.jsoNcontent.PdfValues
+      .filter(i => (i.FieldName === 'TotalTaxAmount' || i.FieldName === 'GrandTotal') && i.FieldValue !== null)
+      .map(i => i.FieldValue ? parseFloat(i.FieldValue.replace(/₹|,/g, '')) : 0) // Parse the amount, remove currency symbols
+  )
+  .filter(value => !isNaN(value)); // Filter out any NaN values
 
-  const invoiceValues = this.pdfResponse.map(j => j.jsoNcontent.Tables.filter(t => t.TableNumber === 1).flatMap(c => c.Cells.filter(cell => cell.RowIndex === 1).map(cell => parseFloat(cell.Content.replace(/₹|,/g, ''))).filter(value => !isNaN(value))));
-  const invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues.map(i => i.FieldName);
+// Extract categories for the chart (FieldName for TotalTaxAmount and GrandTotal)
+const invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues
+  .filter(i => (i.FieldName === 'TotalTaxAmount' || i.FieldName === 'GrandTotal') && i.FieldValue !== null)
+  .map(i => i.FieldName);
 
+// Log to verify the extracted data
+console.log("Invoice Values:", invoiceValues);
+console.log("Invoice Categories:", invoiceCategories);
 
-  console.log("Invoice Values: " + invoiceValues);
-
-  this.invoiceDistributionChart = {
-    series: [
-      // name: 'Invoice Amount',
-      ...invoiceValues
-    ],
-    chart: {
-      type: 'pie',
-      height: 350
-    },
-    labels: invoiceCategories,
-    title: {
-      text: 'Invoice Amount Distribution'
-    },
-    responsive: [
-      {
-        breakpoint: 480,
-        options: {
-          chart: {
-            width: 200
-          },
-          legend: {
-            position: 'bottom'
-          }
+// Update the chart configuration with TotalTaxAmount and GrandTotal values
+this.invoiceDistributionChart = {
+  series: invoiceValues, // Valid invoice values
+  chart: {
+    type: 'pie',
+    height: 350
+  },
+  labels: invoiceCategories, // Corresponding FieldName for TotalTaxAmount and GrandTotal
+  title: {
+    text: 'Invoice Amount Distribution'
+  },
+  responsive: [
+    {
+      breakpoint: 480,
+      options: {
+        chart: {
+          width: 200
+        },
+        legend: {
+          position: 'bottom'
         }
       }
-    ]
-  };
-
-  // // Initialize Amount in Words Confidence Chart
-  const amountInWordsData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.filter(item => item.FieldName === 'AmountInWords').map(item => item.Confidence));
-  const labelData = this.pdfResponse[0].jsoNcontent.PdfValues.map(i => i.FieldName);
-
-  console.log(amountInWordsData);
-
-  this.amountInWordsChart = {
-    series: [
-      // name: 'Confidence',
-      ...amountInWordsData
-    ],
-    chart: {
-      type: 'radialBar',
-      height: 350
-    },
-    labels: labelData,
-    title: {
-      text: 'Confidence Level for Amount in Words'
     }
-  };
+  ]
+};
+
+
 
   this.paidUnpaidInvoices = {
     series: [60, 40],
@@ -307,11 +311,14 @@ this.extractedData.forEach((item) => {
   this.monthlyExpenses[monthIndex] += grandTotal;
 });
 
+const formattedMonthlyExpenses = this.monthlyExpenses.map(expense => parseFloat(expense.toFixed(2)));
+
+
 // Now that we have the monthly expenses, update the chart data
 this.monthlyExpensesChart = {
   series: [{
     name: 'Expenses',
-    data: this.monthlyExpenses // Use the calculated monthly expenses
+    data: formattedMonthlyExpenses // Use the calculated monthly expenses
   }],
   chart: {
     type: 'line',
@@ -325,44 +332,51 @@ this.monthlyExpensesChart = {
   }
 };
 
-   this.categoryWiseExpenses = {
-     series: [{
-       name: 'Expenses',
-       data: [12000, 10000, 8000, 15000, 6000] // Example data
-     }],
-     chart: {
-       type: 'bar',
-       height: 350
-     },
-     xaxis: {
-       categories: ['Utilities', 'Rent', 'Supplies', 'Maintenance', 'Miscellaneous']
-     },
-     title: {
-       text: 'Category-wise Expenses'
-     }
-   };
 
-   this.topVendors = {
-     series: [44, 55, 13, 43, 22],
-     chart: {
-       type: 'pie',
-       height: 350
-     },
-     labels: ['Vendor A', 'Vendor B', 'Vendor C', 'Vendor D', 'Vendor E'],
-     responsive: [
-       {
-         breakpoint: 480,
-         options: {
-           chart: {
-             width: 200
-           },
-           legend: {
-             position: 'bottom'
-           }
-         }
-       }
-     ]
-   };
+
+  // Create an object to hold the totals for each BillToName
+const vendorTotals: { [key: string]: number } = {};
+
+// Iterate through the extracted data
+this.extractedData.forEach((item) => {
+  const SoldByName = item.SoldByName;
+  const grandTotal = parseFloat(item.GrandTotal) || 0;
+
+  // Accumulate the grand total for each BillToName
+  if (vendorTotals[SoldByName]) {
+    vendorTotals[SoldByName] += grandTotal;
+  } else {
+    vendorTotals[SoldByName] = grandTotal;
+  }
+});
+
+// Extract labels (vendor names) and data (totals) from the vendorTotals object
+const vendorLabels = Object.keys(vendorTotals); // BillToName values
+const vendorData = Object.values(vendorTotals).map(total => parseFloat(total.toFixed(2))); // Corresponding GrandTotal values
+
+// Now that we have the totals, update the pie chart data
+this.topVendors = {
+  series: vendorData, // Use the accumulated GrandTotal values
+  chart: {
+    type: 'pie',
+    height: 350
+  },
+  labels: vendorLabels, // Use the BillToName values as labels
+  responsive: [
+    {
+      breakpoint: 480,
+      options: {
+        chart: {
+          width: 200
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  ]
+};
+
    this.extractedData.forEach((item) => {
     const orderDate = this.parseDate(item.OrderDate);
     const formattedDate = this.formatDateForChart(orderDate);
@@ -403,21 +417,39 @@ this.monthlyExpensesChart = {
     }
   };
 
-  // Refresh or update the chart (if necessary, based on your chart library)
+  const priceRanges = [
+    { range: '0 - 1000', min: 0, max: 1000, count: 0 },
+    { range: '1000 - 5000', min: 1000, max: 5000, count: 0 },
+    { range: '5000 - 10000', min: 5000, max: 10000, count: 0 },
+    { range: '10000 - 20000', min: 10000, max: 20000, count: 0 },
+    { range: '20000+', min: 20000, max: Infinity, count: 0 }
+  ];
+  this.extractedData.forEach((item) => {
+    const grandTotal = item.GrandTotal;
 
-  // Helper function to format date for chart categories
+    // Find the appropriate range and increment its count
+    for (const range of priceRanges) {
+      if (grandTotal >= range.min && grandTotal < range.max) {
+        range.count++;
+        break;
+      }
+    }
+  });
+
+  const categoriesPrice: string[] = priceRanges.map(range => range.range);
+const dataPrice: number[] = priceRanges.map(range => range.count);
 
    this.invoiceAmountDistribution = {
      series: [{
        name: 'Invoices',
-       data: [3, 8, 7, 2, 5, 10, 6, 4, 3, 8, 9, 12] // Example invoice counts
+       data: dataPrice// Example invoice counts
      }],
      chart: {
        type: 'heatmap',
        height: 350
      },
      xaxis: {
-       categories: ['< $500', '$500-$1000', '$1000-$2000', '$2000-$3000', '$3000-$4000', '> $4000']
+       categories:categoriesPrice
      },
      title: {
        text: 'Invoice Amount Distribution'

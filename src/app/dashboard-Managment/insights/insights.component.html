@@ -16,20 +16,12 @@
       </div>
     </div>
     <div class="flex flex-col md:flex-row gap-6">
-      <div class="w-full bg-white shadow-sm rounded-lg p-4">
+      <div class="w-1/2 bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 mb-2 font-semibold">Processing Success vs. Failure</p>
         <apx-chart [series]="processingSuccessFail.series" [chart]="processingSuccessFail.chart" [labels]="processingSuccessFail.labels" [title]="processingSuccessFail.title"></apx-chart>
         <p class="text-gray-500 mt-2">This chart displays the ratio of successfully processed files to those that failed. Use it to evaluate the effectiveness of our file processing procedures.</p>
       </div>
-      <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Processing Time Distribution</p>
-        <apx-chart [series]="processingTimeDistribution.series" [chart]="processingTimeDistribution.chart" [xaxis]="processingTimeDistribution.xaxis" [title]="processingTimeDistribution.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Analyze the distribution of processing times to understand the efficiency of file handling. This chart helps in identifying any bottlenecks or delays in the processing workflow.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Confidence Levels by Field -->
+        <!-- Confidence Levels by Field -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
       <svg class="w-6 h-6 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
@@ -38,26 +30,23 @@
     <apx-chart [series]="confidenceChart.series" [chart]="confidenceChart.chart" [labels]="confidenceChart.labels" [xaxis]="confidenceChart.xaxis" [title]="confidenceChart.title"></apx-chart>
     <p class="text-gray-500 mt-2">This chart shows the confidence levels of various fields extracted from the processed PDFs.</p>
   </div>
+    </div>
+  </div>
+
+
 
   <!-- Invoice Amount Distribution -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path></svg>
+      <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path>
+      </svg>
       Invoice Amount Distribution
     </h2>
     <apx-chart [series]="invoiceDistributionChart.series" [chart]="invoiceDistributionChart.chart" [labels]="invoiceDistributionChart.labels" [title]="invoiceDistributionChart.title"></apx-chart>
-    <p class="text-gray-500 mt-2">This chart displays the distribution of different amounts (Net, Tax, Total) within an invoice.</p>
+    <p class="text-gray-500 mt-2">This chart displays the distribution of Total Tax Amount and Grand Total within the invoice.</p>
   </div>
 
-  <!-- Confidence Level for Amount in Words -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-teal-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m-3-3H7"></path></svg>
-      Confidence Level for Amount in Words
-    </h2>
-    <apx-chart [series]="amountInWordsChart.series" [chart]="amountInWordsChart.chart" [labels]="amountInWordsChart.labels" [title]="amountInWordsChart.title"></apx-chart>
-    <p class="text-gray-500 mt-2">This chart shows the confidence level for the 'Amount in Words' field extracted from the PDF.</p>
-  </div>
 
   <!-- Expense Overview -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
@@ -71,7 +60,7 @@
     <div class="flex flex-col md:flex-row gap-6 mb-6">
       <div class="flex-1 bg-white shadow-sm rounded-lg p-4">
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Expenses</h3>
-        <p class="text-3xl font-bold text-gray-900 mb-2">{{ totalExpenses }}</p>
+        <p class="text-3xl font-bold text-gray-900 mb-2">₹ {{ totalExpenses }}</p>
         <p class="text-gray-500">Represents the total expenses incurred over a given period. This figure is crucial for financial planning and monitoring expenditure.</p>
       </div>
     </div>
@@ -81,11 +70,7 @@
         <apx-chart [series]="monthlyExpensesChart.series" [chart]="monthlyExpensesChart.chart" [xaxis]="monthlyExpensesChart.xaxis" [title]="monthlyExpensesChart.title"></apx-chart>
         <p class="text-gray-500 mt-2">This chart shows the total expenses per month. It helps in understanding spending trends and preparing monthly budgets.</p>
       </div>
-      <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Category-Wise Expenses</p>
-        <apx-chart [series]="categoryWiseExpenses.series" [chart]="categoryWiseExpenses.chart" [xaxis]="categoryWiseExpenses.xaxis" [title]="categoryWiseExpenses.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Analyze how expenses are distributed across different categories. This chart assists in identifying major spending areas and controlling costs.</p>
-      </div>
+
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 mb-2 font-semibold">Top Vendors</p>
         <apx-chart [series]="topVendors.series" [chart]="topVendors.chart" [labels]="topVendors.labels" [title]="topVendors.title"></apx-chart>
@@ -106,7 +91,7 @@
     <div class="flex flex-col md:flex-row gap-6 mb-6">
       <div class="flex-1 bg-white shadow-sm rounded-lg p-4">
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Average Invoice Amount</h3>
-        <p class="text-3xl font-bold text-gray-900 mb-2">{{ averageInvoiceAmount }}</p>
+        <p class="text-3xl font-bold text-gray-900 mb-2">₹ {{ averageInvoiceAmount }}</p>
         <p class="text-gray-500">Displays the average amount per invoice. This metric helps in understanding billing patterns and managing cash flow effectively.</p>
       </div>
     </div>
@@ -147,7 +132,7 @@
           <tr *ngFor="let row of extractedData" class="border-b">
             <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
             <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-            <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.BillToName || 'N/A' }}</td>
+            <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.SoldByName || 'N/A' }}</td>
             <td class="py-2 px-4 text-green-500">Completed</td>
           </tr>
         </tbody>
