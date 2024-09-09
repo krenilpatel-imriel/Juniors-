@@ -109,40 +109,48 @@
     </div>
   </div>
 
-  <!-- Recent Transactions -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"></path></svg>
-      Recent Transactions
-    </h2>
-    <p class="text-gray-600 mb-6">
-      Keep track of the most recent transactions to stay updated with the latest financial activities. This section provides a quick overview of recent transaction data.
-    </p>
-    <div class="bg-white shadow-sm rounded-lg p-4">
-      <table class="w-full text-left text-gray-700">
-        <thead class="bg-gray-200 text-gray-600">
-          <tr>
-            <th class="py-2 px-4">Date</th>
-            <th class="py-2 px-4">Amount</th>
-            <th class="py-2 px-4">Description</th>
-            <th class="py-2 px-4">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of extractedData" class="border-b">
-            <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
-            <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-            <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.SoldByName || 'N/A' }}</td>
-            <td class="py-2 px-4 text-green-500">Completed</td>
-          </tr>
-        </tbody>
-      </table>
+ <!-- Recent Transactions -->
+<div class="mb-8 bg-white shadow-md rounded-lg p-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+    <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"></path></svg>
+    Recent Transactions
+  </h2>
+  <p class="text-gray-600 mb-6">
+    Keep track of the most recent transactions to stay updated with the latest financial activities. This section provides a quick overview of recent transaction data.
+  </p>
+  <div class="bg-white shadow-sm rounded-lg p-4">
+    <table class="w-full text-left text-gray-700">
+      <thead class="bg-gray-200 text-gray-600">
+        <tr>
+          <th class="py-2 px-4">Date</th>
+          <th class="py-2 px-4">Amount</th>
+          <th class="py-2 px-4">Description</th>
+          <th class="py-2 px-4">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of extractedData" class="border-b">
+          <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
+          <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
+          <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.SoldByName || 'N/A' }}</td>
+          <td class="py-2 px-4 text-green-500">Completed</td>
+        </tr>
+      </tbody>
+    </table>
 
-      <!-- Display total GrandTotal at the bottom -->
-      <div class="mt-4 text-right">
-        <p class="text-lg font-semibold">Total Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
-      </div>
+    <!-- Display total GrandTotal at the bottom -->
+    <div class="mt-4 text-right">
+      <p class="text-lg font-semibold">Total Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
     </div>
 
+    <!-- Export to Excel Button -->
+    <div class="mt-4 text-right">
+      <button (click)="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Export to Excel
+      </button>
+    </div>
   </div>
+</div>
+
+
 </div>

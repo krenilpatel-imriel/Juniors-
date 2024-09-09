@@ -17,6 +17,7 @@ import {
   ApexResponsive,
   ApexGrid
 } from 'ng-apexcharts';
+import * as ExcelJS from 'exceljs';
 
 
 @Component({
@@ -562,4 +563,85 @@ const dataPrice: number[] = priceRanges.map(range => range.count);
      }
    };
  }
+
+ async exportToExcel(): Promise<void> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Recent Transactions');
+
+  // Define the header
+  const header = ['Date', 'Amount', 'Description', 'Status'];
+
+  // Add header row
+  worksheet.addRow(header);
+
+  // Apply header styling
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    cell.font = { bold: true };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFF00' } // Light yellow background
+    };
+    cell.border = {
+      bottom: { style: 'thin' }
+    };
+  });
+
+  // Prepare the data rows
+  this.extractedData.forEach(row => {
+    worksheet.addRow([
+      row.OrderDate || 'N/A',
+      `₹${row.GrandTotal || 'N/A'}`,
+      `Payment for ${row.OrderNo || 'N/A'} - ${row.SoldByName || 'N/A'}`,
+      'Completed'
+    ]);
+  });
+
+  // Add the total row
+  worksheet.addRow([
+    '', // Empty cell for Date
+    `Total Grand Total: ₹${this.totalGrandTotal.toFixed(2)}`, // Amount
+    '', // Empty cell for Description
+    '' // Empty cell for Status
+  ]);
+
+  // Apply styling to all rows
+  worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+    row.height = 25; // Increase row height
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }; // Center and middle alignment
+      if (rowNumber > 1) { // Skip the header row
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'F1F1F1' } // Light gray background for data cells
+        };
+      }
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+  });
+
+  // Set column widths
+  worksheet.getColumn(1).width = 20; // Date column
+  worksheet.getColumn(2).width = 25; // Amount column
+  worksheet.getColumn(3).width = 70; // Description column
+  worksheet.getColumn(4).width = 20; // Status column
+
+  // Export the workbook
+  await workbook.xlsx.writeBuffer().then((buffer) => {
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Recent_Transactions.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  });
+}
 }
