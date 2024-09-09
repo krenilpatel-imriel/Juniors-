@@ -1,38 +1,34 @@
 <header class="sticky inset-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-lg">
-  <nav class="mx-auto flex max-w-6xl gap-[3rem] items-center px-6 transition-all duration-200 ease-in-out lg:px-12 py-4 navbar">
+  <nav class="mx-auto flex  max-w-6xl w-full justify-between items-center transition-all duration-200 ease-in-out py-4 navbar">
     <!-- Logo -->
     <div class="relative cursor-pointer flex items-center logo-container">
       <a href="">
-        <img src="../../../../assets/viewvoice.png" alt="Juniors++" class="w-[9.5rem] logo">
+        <img src="../../../../assets/viewvoice.png" alt="Juniors++" class="w-[11rem] logo">
       </a>
     </div>
 
     <!-- Navbar Links -->
-    <ul class="hidden md:flex items-center justify-center gap-10">
-      <li class="pt-1.5 font-dm text-sm font-medium text-slate-700 cursor-pointer nav-link">
-        <a (click)="navigateToContact()" class="nav-link">Contact</a>
-      </li>
-      <li class="pt-1.5 font-dm text-sm font-medium text-slate-700 cursor-pointer">
-        <a href="doc" class="nav-link">How to Use</a>
-      </li>
-    </ul>
+     <div>
+      <ul class="hidden md:flex items-center justify-center gap-10">
+        <li class="pt-1.5 font-dm font-medium text-slate-700 cursor-pointer nav-link">
+          <a (click)="navigateToContact()" class="nav-link">Contact</a>
+        </li>
+        <li class="pt-1.5 font-dm font-medium text-slate-700 cursor-pointer">
+          <a href="doc" class="nav-link">How to Use</a>
+        </li>
+      </ul> <!-- Mobile Menu Button -->
+      <div class="relative flex items-center justify-center md:hidden">
+        <button type="button" aria-label="Toggle navigation">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-6 w-auto text-slate-900">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+          </svg>
+        </button>
+      </div></div>
 
-    <!-- Flex Grow -->
-    <div class="flex-grow"></div>
 
-    <!-- Sign In / Sign Up -->
-    <div class="hidden md:flex items-center justify-center gap-6 nav-link">
-      <a class="font-dm text-sm cursor-pointer font-medium text-slate-700 ">Sign in</a>
-      <a class="rounded-md cursor-pointer bg-gradient-to-tl from-pink-400 to-purple-600 px-3 py-1.5 font-dm text-sm font-medium text-white shadow-md shadow-purple-400/50 transition-transform duration-200 ease-in-out hover:scale-[1.03] ">Sign up</a>
-    </div>
 
-    <!-- Mobile Menu Button -->
-    <div class="relative flex items-center justify-center md:hidden">
-      <button type="button" aria-label="Toggle navigation">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="h-6 w-auto text-slate-900">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
-        </svg>
-      </button>
-    </div>
+
+
+
   </nav>
 </header>

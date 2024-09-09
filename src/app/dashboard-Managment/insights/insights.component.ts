@@ -54,6 +54,11 @@ export class InsightsComponent {
  confidenceChart: any;
  invoiceDistributionChart: any;
  amountInWordsChart: any;
+ extractedData: any[] = [];
+ totalGrandTotal: number = 0;
+monthlyExpenses = new Array(12).fill(0);
+invoiceCountsByDate: { [key: string]: number } = {};
+
 
  constructor(private fileService: FileUploadService) {
 
@@ -65,9 +70,70 @@ export class InsightsComponent {
 
  ngOnInit(): void {
  }
+ extractValues() {
+  this.extractedData = []; // Clear any previous data
+
+  this.pdfResponse.forEach((record: PdfResponse) => {
+    const extractedRow: any = {};
+
+    // Iterate through PdfValues to extract fields like GrandTotal, OrderDate, etc.
+    record.jsoNcontent.PdfValues.forEach((pdfValue: any) => {
+      const field = pdfValue.FieldName;
+      const value = pdfValue.FieldValue;
+
+      if (value !== null) {
+        switch (field) {
+          case 'GrandTotal':
+            extractedRow.GrandTotal = parseFloat(value.replace(/₹|,/g, '')); // Removing currency symbols
+            break;
+          case 'OrderDate':
+            extractedRow.OrderDate = value.replace('Date:', '');
+            break;
+          case 'BillToName':
+            extractedRow.BillToName = value;
+            break;
+          case 'OrderNo':
+            extractedRow.OrderNo = value;
+            break;
+        }
+      }
+    });
+
+    // Push the extracted row to the array
+    this.extractedData.push(extractedRow);
+
+
+  });
+}
+
+calculateTotalGrandTotal() {
+  this.totalGrandTotal = this.extractedData.reduce((total, row) => {
+    return total + (row.GrandTotal || 0);
+  }, 0);
+}
+
+formatDateForChart(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+  return `${day}-${month}`;
+}
+
+
+
+
+parseDate(orderDate: string): Date {
+  // Assuming the format is "Date:DD.MM.YYYY"
+  const dateParts = orderDate.replace('Date:', '').split('.');
+  const day = parseInt(dateParts[0], 10);
+  const month = parseInt(dateParts[1], 10) - 1; // Months are 0-indexed in JavaScript Date
+  const year = parseInt(dateParts[2], 10);
+
+  return new Date(year, month, day);
+}
+
 
  initializeCharts(data:any) {
-
+  console.log(data);
   this.pdfResponse = data.records.map((record: any) => {
     if (typeof record.jsoNcontent === 'string') {
       try {
@@ -76,11 +142,30 @@ export class InsightsComponent {
         console.error('Error parsing JSON content:', error);
       }
     }
+    console.log(record);
+
     return record;
   });
+  this.extractValues();
+
+// Sort data by OrderDate (latest first, considering year and month)
+this.extractedData.sort((a, b) => {
+  // Convert OrderDate to Date object
+  const dateA = this.parseDate(a.OrderDate);
+  const dateB = this.parseDate(b.OrderDate);
+
+  // Compare year first, then month
+  if (dateB.getFullYear() !== dateA.getFullYear()) {
+    return dateB.getFullYear() - dateA.getFullYear(); // Sort by year
+  }
+  return dateB.getMonth() - dateA.getMonth(); // Sort by month
+});
+  this.calculateTotalGrandTotal();
 
   const confidenceData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
   const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
+  console.log(confidenceData);
+  console.log(confidenceLabels);
 
   this.confidenceChart = {
     series: [{
@@ -104,6 +189,7 @@ export class InsightsComponent {
 
   const invoiceValues = this.pdfResponse.map(j => j.jsoNcontent.Tables.filter(t => t.TableNumber === 1).flatMap(c => c.Cells.filter(cell => cell.RowIndex === 1).map(cell => parseFloat(cell.Content.replace(/₹|,/g, ''))).filter(value => !isNaN(value))));
   const invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues.map(i => i.FieldName);
+
 
   console.log("Invoice Values: " + invoiceValues);
 
@@ -208,22 +294,36 @@ export class InsightsComponent {
      }
    };
 
-   this.monthlyExpensesChart = {
-     series: [{
-       name: 'Expenses',
-       data: [4500, 5600, 4700, 5200, 5800, 6100, 6000, 6300, 7000, 7500, 7100, 7800] // Example data
-     }],
-     chart: {
-       type: 'line',
-       height: 350
-     },
-     xaxis: {
-       categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-     },
-     title: {
-       text: 'Monthly Expenses'
-     }
-   };
+   console.log("grandtotal", this.extractedData);
+ // Iterate through the extracted data
+this.extractedData.forEach((item) => {
+  const orderDate = this.parseDate(item.OrderDate);
+  const grandTotal = parseFloat(item.GrandTotal);
+
+  // Get the month index (0 for January, 11 for December)
+  const monthIndex = orderDate.getMonth();
+
+  // Accumulate the grand total for the corresponding month
+  this.monthlyExpenses[monthIndex] += grandTotal;
+});
+
+// Now that we have the monthly expenses, update the chart data
+this.monthlyExpensesChart = {
+  series: [{
+    name: 'Expenses',
+    data: this.monthlyExpenses // Use the calculated monthly expenses
+  }],
+  chart: {
+    type: 'line',
+    height: 350
+  },
+  xaxis: {
+    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  },
+  title: {
+    text: 'Monthly Expenses'
+  }
+};
 
    this.categoryWiseExpenses = {
      series: [{
@@ -263,23 +363,49 @@ export class InsightsComponent {
        }
      ]
    };
+   this.extractedData.forEach((item) => {
+    const orderDate = this.parseDate(item.OrderDate);
+    const formattedDate = this.formatDateForChart(orderDate);
 
-   this.invoiceCountByDate = {
-     series: [{
-       name: 'Invoices',
-       data: [3, 8, 7, 2, 5, 10, 6, 4, 3, 8, 9, 12] // Example invoice counts
-     }],
-     chart: {
-       type: 'heatmap',
-       height: 350
-     },
-     xaxis: {
-       categories: ['01-Aug', '02-Aug', '03-Aug', '04-Aug', '05-Aug', '06-Aug', '07-Aug', '08-Aug', '09-Aug', '10-Aug', '11-Aug', '12-Aug']
-     },
-     title: {
-       text: 'Invoice Count by Date'
-     }
-   };
+    // Increment the count for the formatted date
+    if (this.invoiceCountsByDate[formattedDate]) {
+      this.invoiceCountsByDate[formattedDate]++;
+    } else {
+      this.invoiceCountsByDate[formattedDate] = 1;
+    }
+  });
+
+  // Generate categories and data arrays for the chart
+  const categories: string[] = [];
+  const datedata: number[] = [];
+
+  // Fill categories and data arrays
+  Object.keys(this.invoiceCountsByDate).sort().forEach(date => {
+    categories.push(date);
+    datedata.push(this.invoiceCountsByDate[date]);
+  });
+
+  // Update the chart configuration
+  this.invoiceCountByDate = {
+    series: [{
+      name: 'Invoices',
+      data: datedata // Use the calculated invoice counts
+    }],
+    chart: {
+      type: 'heatmap',
+      height: 350
+    },
+    xaxis: {
+      categories: categories // Use the formatted dates as categories
+    },
+    title: {
+      text: 'Invoice Count by Date'
+    }
+  };
+
+  // Refresh or update the chart (if necessary, based on your chart library)
+
+  // Helper function to format date for chart categories
 
    this.invoiceAmountDistribution = {
      series: [{

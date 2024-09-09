@@ -144,15 +144,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr class="border-b">
-            <td class="py-2 px-4">08/22/2024</td>
-            <td class="py-2 px-4 text-green-600 font-semibold">$2,500.00</td>
-            <td class="py-2 px-4">Payment for Invoice #1234</td>
+          <tr *ngFor="let row of extractedData" class="border-b">
+            <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
+            <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
+            <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.BillToName || 'N/A' }}</td>
             <td class="py-2 px-4 text-green-500">Completed</td>
           </tr>
-          <!-- Repeat similar rows for other transactions -->
         </tbody>
       </table>
+
+      <!-- Display total GrandTotal at the bottom -->
+      <div class="mt-4 text-right">
+        <p class="text-lg font-semibold">Total Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+      </div>
     </div>
+
   </div>
 </div>
