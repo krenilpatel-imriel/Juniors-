@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FileResponse } from 'src/app/Models/fileResponseModel';
-import data from 'src/app/Models/reponse.json';
+import { FileResponse, PdfResponse } from 'src/app/Models/fileResponseModel';
+import { FileUploadService } from 'src/app/services/fileUpload.service';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -50,25 +50,37 @@ export class InsightsComponent {
  expenseForecasting: any;
 
  // Chart Data
- pdfResponse!: FileResponse;
+ pdfResponse!: PdfResponse[];
  confidenceChart: any;
  invoiceDistributionChart: any;
  amountInWordsChart: any;
 
- constructor() {
-   this.initializeCharts();
+ constructor(private fileService: FileUploadService) {
+
+  this.fileService.getDataFromDB().subscribe((data:any)=>{
+    this.initializeCharts(data);
+  });
+
  }
 
  ngOnInit(): void {
  }
 
- initializeCharts() {
+ initializeCharts(data:any) {
 
-  this.pdfResponse = data;
-  console.log(this.pdfResponse);
+  this.pdfResponse = data.records.map((record: any) => {
+    if (typeof record.jsoNcontent === 'string') {
+      try {
+        record.jsoNcontent = JSON.parse(record.jsoNcontent);
+      } catch (error) {
+        console.error('Error parsing JSON content:', error);
+      }
+    }
+    return record;
+  });
 
-  const confidenceData = this.pdfResponse.PdfValues.map(item => item.Confidence);
-  const confidenceLabels = this.pdfResponse.PdfValues.map(item => item.FieldName);
+  const confidenceData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
+  const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
 
   this.confidenceChart = {
     series: [{
@@ -79,6 +91,7 @@ export class InsightsComponent {
       type: 'bar',
       height: 350
     },
+    labels: confidenceLabels,
     xaxis: {
       categories: confidenceLabels
     },
@@ -89,8 +102,10 @@ export class InsightsComponent {
 
   // // Initialize Invoice Amount Distribution Chart
 
-  const invoiceValues = this.pdfResponse.Tables.filter(t => t.TableNumber === 1).flatMap(c => c.Cells.filter(cell => cell.RowIndex === 1).map(cell => parseFloat(cell.Content.replace(/₹|,/g, ''))).filter(value => !isNaN(value)));
-  const invoiceCategories = ['Net Amount', 'Tax Amount', 'Total Amount'];
+  const invoiceValues = this.pdfResponse.map(j => j.jsoNcontent.Tables.filter(t => t.TableNumber === 1).flatMap(c => c.Cells.filter(cell => cell.RowIndex === 1).map(cell => parseFloat(cell.Content.replace(/₹|,/g, ''))).filter(value => !isNaN(value))));
+  const invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues.map(i => i.FieldName);
+
+  console.log("Invoice Values: " + invoiceValues);
 
   this.invoiceDistributionChart = {
     series: [
@@ -121,8 +136,11 @@ export class InsightsComponent {
   };
 
   // // Initialize Amount in Words Confidence Chart
-  const amountInWordsData = this.pdfResponse.PdfValues.filter(item => item.FieldName === 'AmountInWords').map(item => item.Confidence);
-  
+  const amountInWordsData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.filter(item => item.FieldName === 'AmountInWords').map(item => item.Confidence));
+  const labelData = this.pdfResponse[0].jsoNcontent.PdfValues.map(i => i.FieldName);
+
+  console.log(amountInWordsData);
+
   this.amountInWordsChart = {
     series: [
       // name: 'Confidence',
@@ -132,7 +150,7 @@ export class InsightsComponent {
       type: 'radialBar',
       height: 350
     },
-    labels: ['Paid'],
+    labels: labelData,
     title: {
       text: 'Confidence Level for Amount in Words'
     }

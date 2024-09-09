@@ -21,3 +21,9 @@ export interface FileResponse {
   Tables: Table[];
   FileName: string | number;
 }
+
+export interface PdfResponse {
+  id: number;
+  jsoNcontent: FileResponse;
+  jsoNfilename: string
+}

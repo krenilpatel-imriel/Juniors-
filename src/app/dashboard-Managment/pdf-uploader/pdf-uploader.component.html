@@ -1,12 +1,29 @@
 <div class="container mx-auto h-screen w-screen">
-  <div class="bg-white p-6 border-2 border-primary ">
-    <h2 class="text-lg font-bold  mb-4">Upload Documents</h2>
+  <div class="bg-white p-6 border-2 border-primary">
+    <div class="flex row pdfheader">
+      <div>
+        <h2 class="text-lg font-bold mb-4">Upload Documents</h2>
 
-    <input type="file" (change)="onFileSelected($event)" multiple accept=".pdf" class="hidden" id="fileUploadInput" >
+        <input
+          type="file"
+          (change)="onFileSelected($event)"
+          multiple
+          accept=".pdf"
+          class="hidden"
+          id="fileUploadInput"
+        />
 
-    <label for="fileUploadInput" class="cursor-pointer bg-gray-100 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-200 transition duration-300 block w-[30%] text-center">
-      <i class="fas fa-upload"></i> Choose Files
-    </label>
+        <label
+          for="fileUploadInput"
+          class="cursor-pointer bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition duration-300 block text-center"
+        >
+          <i class="fas fa-upload"></i> Choose Files
+        </label>
+      </div>
+      <div class="">
+        <button [routerLink]="['/insights']" class="p-2 rounded-md bg-violet-500 text-white font-medium hover:bg-violet-600">View Insights</button>
+      </div>
+    </div>
 
     <div *ngIf="files.length > 0" class="mt-6">
       <h3 class="text-sm font-semibold text-gray-700 mb-4">Uploaded Files:</h3>
@@ -16,19 +33,42 @@
         <table class="min-w-full bg-white border border-gray-200">
           <thead>
             <tr>
-              <th class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold">File Name</th>
-              <th class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold">Size</th>
-              <th class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold">File Type</th>
-              <th class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold">Options</th>
+              <th
+                class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold"
+              >
+                File Name
+              </th>
+              <th
+                class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold"
+              >
+                Size
+              </th>
+              <th
+                class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold"
+              >
+                File Type
+              </th>
+              <th
+                class="py-2 px-4 border-b text-left text-sm text-gray-600 font-semibold"
+              >
+                Options
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let file of files" class="bg-gray-100">
               <td class="py-2 px-4 border-b text-gray-800">{{ file.name }}</td>
-              <td class="py-2 px-4 border-b text-gray-600">{{ file.size | fileSizePipe }}</td>
-              <td class="py-2 px-4 border-b text-gray-600">{{ getFileType(file) }}</td>
+              <td class="py-2 px-4 border-b text-gray-600">
+                {{ file.size | fileSizePipe }}
+              </td>
+              <td class="py-2 px-4 border-b text-gray-600">
+                {{ getFileType(file) }}
+              </td>
               <td class="py-2 px-4 border-b">
-                <button (click)="removeFile(file)" class="text-red-500 hover:text-red-700">
+                <button
+                  (click)="removeFile(file)"
+                  class="text-red-500 hover:text-red-700"
+                >
                   <i class="fas fa-trash-alt"></i> Remove
                 </button>
               </td>
