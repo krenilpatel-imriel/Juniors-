@@ -33,8 +33,6 @@
     </div>
   </div>
 
-
-
   <!-- Invoice Amount Distribution -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
@@ -46,7 +44,6 @@
     <apx-chart [series]="invoiceDistributionChart.series" [chart]="invoiceDistributionChart.chart" [labels]="invoiceDistributionChart.labels" [title]="invoiceDistributionChart.title"></apx-chart>
     <p class="text-gray-500 mt-2">This chart displays the distribution of Total Tax Amount and Grand Total within the invoice.</p>
   </div>
-
 
   <!-- Expense Overview -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
@@ -124,16 +121,16 @@
         <tr>
           <th class="py-2 px-4">Date</th>
           <th class="py-2 px-4">Amount</th>
-          <th class="py-2 px-4">Description</th>
-          <th class="py-2 px-4">Status</th>
+          <th class="py-2 px-4">Order Id</th>
+          <th class="py-2 px-4">Vendor</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let row of extractedData" class="border-b">
           <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
           <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-          <td class="py-2 px-4">Payment for {{ row.OrderNo || 'N/A' }} - {{ row.SoldByName || 'N/A' }}</td>
-          <td class="py-2 px-4 text-green-500">Completed</td>
+          <td class="py-2 px-4">{{ row.OrderNo || 'N/A' }}</td>
+          <td class ="py-2 px-4">{{ row.SoldByName || 'N/A' }}</td>
         </tr>
       </tbody>
     </table>

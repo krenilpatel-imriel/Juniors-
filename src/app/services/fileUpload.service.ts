@@ -18,7 +18,7 @@ export class FileUploadService {
   }
 
   uploadFile(data: FileRequestModel): any{
-    console.log(data);
+    // console.log(data);
     return this.httpClient.post<FileRequestModel>(
       `${this.apiBaseUrl}${'/GetPdfValuesbyPdf'}`,
         data
@@ -49,7 +49,7 @@ export class FileUploadService {
   async addFile(file: File): Promise<any> {
     const db = await this.dbPromise;
     var fileExists = db.get('files', file.name);
-    console.log(fileExists);
+    // console.log(fileExists);
     if (await fileExists) {
       alert('A file with this name already exists. Please select another file..!');
       return 0;

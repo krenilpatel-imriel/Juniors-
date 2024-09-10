@@ -8,7 +8,7 @@ import { FileRequestModel } from 'src/app/Models/fileRequestModel';
   templateUrl: './pdf-uploader.component.html',
   styleUrls: ['./pdf-uploader.component.scss']
 })
-export class PDFUploaderComponent implements OnInit  {
+export class PDFUploaderComponent implements OnInit {
   files: File[] = [];
   pdfResponse!: FileResponse;
 
@@ -24,36 +24,33 @@ export class PDFUploaderComponent implements OnInit  {
 
     for (const file of selectedFiles) {
       var result = await this.fileService.addFile(file);
-      if(result == 0) return;
-      
+      if (result == 0) return;
+
       this.files.push(file);
 
       reader.onload = async (e: any) => {
         let base64String = e.target.result;
         const cleanBase64 = base64String.split(',')[1];
-        console.log(cleanBase64);
+        const data: FileRequestModel = {
+          FileName: file.name,
+          Base64String: cleanBase64
+        }
 
-
-      const data : FileRequestModel = {
-        FileName: file.name,
-        Base64String: cleanBase64
-      }
-
-      // Calling backend api to upload files in Azure AI service
-      this.fileService.uploadFile(data).subscribe((response:any)=>{
-        console.log(response);
-        this.pdfResponse = response;
-        this.addFileToDb(this.pdfResponse);
-      });
+        // Calling backend api to upload files in Azure AI service
+        this.fileService.uploadFile(data).subscribe((response: any) => {
+          // console.log(response);
+          this.pdfResponse = response;
+          this.addFileToDb(this.pdfResponse);
+        });
       }
 
       reader.readAsDataURL(file);
     }
   }
 
-  addFileToDb(file: FileResponse){
-    this.fileService.addFileContentsToDB(file).subscribe((data:any)=>{
-      console.log(data);
+  addFileToDb(file: FileResponse) {
+    this.fileService.addFileContentsToDB(file).subscribe((data: any) => {
+      // console.log(data);
     });
   }
 
