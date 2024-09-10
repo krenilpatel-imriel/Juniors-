@@ -185,37 +185,8 @@ export class InsightsComponent {
     // const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
 
     // Flatten the PdfValues arrays into a single array
-const confidenceData = this.pdfResponse
-.flatMap(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
-
-const confidenceLabels = this.pdfResponse
-.flatMap(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
-
-this.confidenceChart = {
-  series: [{
-    name: 'Confidence Level',
-    data: confidenceData ? confidenceData : []
-  }],
-  chart: {
-    type: 'bar',
-    height: 350
-  },
-  xaxis: {
-    categories: confidenceLabels,  // Field names as categories on the x-axis
-    title: {
-      text: 'Field Names'
-    }
-  },
-  yaxis: {
-    title: {
-      text: 'Confidence Level'
-    }
-  },
-  title: {
-    text: 'Confidence Levels by Field'
-  }
-};
-
+    const totalFilesProcessed = this.pdfResponse.length; // Or any other way to calculate total files processed
+    this.generateConfidenceChart(totalFilesProcessed, this.pdfResponse);
 
     // this.confidenceChart = {
     //   series: [{
@@ -249,7 +220,7 @@ this.confidenceChart = {
     //   this.invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues
     //     .filter(i => (i.FieldName === 'TotalTaxAmount' || i.FieldName === 'GrandTotal') && i.FieldValue !== null)
     //     .map(i => i.FieldName);
-    // }  
+    // }
 
     // // Log to verify the extracted data
     // // console.log("Invoice Values:", invoiceValues);
@@ -284,7 +255,7 @@ this.confidenceChart = {
 // Step 1: Extract and sum the GrandTotal and TotalTaxAmount values
 let totalGrandTotal = 0;
 let totalTaxAmount = 0;
- 
+
 this.pdfResponse.forEach(j => {
   j.jsoNcontent.PdfValues.forEach(i => {
     if (i.FieldName === 'GrandTotal' && i.FieldValue !== null) {
@@ -297,15 +268,15 @@ this.pdfResponse.forEach(j => {
     }
   });
 });
- 
+
 // Step 2: Calculate the percentage of TotalTaxAmount out of GrandTotal
 const taxPercentageOfGrandTotal = (totalTaxAmount / totalGrandTotal) * 100;
- 
+
 // Step 3: Format values to two decimal places
 const formattedTaxAmount = parseFloat(totalTaxAmount.toFixed(2));
 let formattedGrandTotal = totalGrandTotal - formattedTaxAmount;
 formattedGrandTotal = parseFloat(formattedGrandTotal.toFixed(2));
- 
+
 // Step 4: Create the chart and display the relevant information
 this.invoiceDistributionChart = {
   series: [formattedGrandTotal, formattedTaxAmount], // Series with the sum of GrandTotal and TotalTaxAmount
@@ -331,7 +302,7 @@ this.invoiceDistributionChart = {
     }
   ]
 };
- 
+
 
     this.paidUnpaidInvoices = {
       series: [60, 40],
@@ -476,6 +447,7 @@ this.invoiceDistributionChart = {
       }
     });
 
+    this.calculateTotalGrandTotal();
     // Generate categories and data arrays for the chart
     const categories: string[] = [];
     const datedata: number[] = [];
@@ -653,7 +625,7 @@ this.invoiceDistributionChart = {
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Recent Transactions');
-  
+
     // Add super header row
     const superHeader = worksheet.addRow(['VIEWVOICE']);
     superHeader.getCell(1).font = { bold: true, color: { argb: 'FFFFFF' } };
@@ -665,13 +637,13 @@ this.invoiceDistributionChart = {
     };
     superHeader.height = 40; // Adjust row height for super header
     worksheet.mergeCells('A1:D1'); // Merge cells for the super header
-  
+
     // Define the header
     const header = ['Date', 'Amount', 'Order Id', 'Vendor'];
-  
+
     // Add header row
     const headerRow = worksheet.addRow(header);
-  
+
     // Apply header styling (light green background)
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       cell.font = { bold: true };
@@ -685,7 +657,7 @@ this.invoiceDistributionChart = {
         bottom: { style: 'thin' }
       };
     });
-  
+
     // Prepare the data rows
     this.extractedData.forEach(row => {
       const dataRow = worksheet.addRow([
@@ -694,11 +666,11 @@ this.invoiceDistributionChart = {
         `${row.OrderNo || 'N/A'}`,
         `${row.SoldByName || 'N/A'}`
       ]);
-  
+
       // Make amount values bold and green
       dataRow.getCell(2).font = { bold: true, color: { argb: '008000' } }; // Green color
     });
-  
+
     // Add the total row
     const totalRow = worksheet.addRow([
       '', // Empty cell for Date
@@ -706,10 +678,10 @@ this.invoiceDistributionChart = {
       '', // Empty cell for Order Id
       ''
     ]);
-  
+
     // Make grand total bold
     totalRow.getCell(2).font = { bold: true };
-  
+
     // Apply styling to all rows (make the rest of the rows white)
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       row.height = 25; // Increase row height
@@ -730,7 +702,7 @@ this.invoiceDistributionChart = {
         };
       });
     });
-  
+
     // Set column widths
     worksheet.getColumn(1).width = 20; // Date column
     worksheet.getColumn(2).width = 25; // Amount column
@@ -748,4 +720,75 @@ this.invoiceDistributionChart = {
       window.URL.revokeObjectURL(url);
     });
   }
-}  
+
+  generateConfidenceChart(totalFilesProcessed: number, pdfResponse: any[]) {
+    // Step 1: Generate confidence labels (L1, L2, L3, ..., L{totalFilesProcessed})
+    const confidenceLabels = Array.from({ length: totalFilesProcessed }, (_, index) => `L${index + 1}`);
+
+    // Step 2: Calculate the average confidence for each file in pdfResponse
+    const confidenceData = pdfResponse.map(j => {
+      const confidences = j.jsoNcontent.PdfValues.map((i: { Confidence: number }) => i.Confidence);
+
+      // Calculate the average confidence for this file
+      const totalConfidence = confidences.reduce((sum: any, value: any) => sum + value, 0);
+      const averageConfidence = totalConfidence / confidences.length;
+
+      return parseFloat(averageConfidence.toFixed(2));  // Format to 2 decimal places
+    });
+
+    // Step 3: Configure the confidence chart
+    this.confidenceChart = {
+      series: [{
+        name: 'Average Confidence Level',
+        data: confidenceData ? confidenceData : []  // Average confidence data for each file
+      }],
+      chart: {
+        type: 'bar',
+        height: 350
+      },
+      xaxis: {
+        categories: confidenceLabels,  // Generated labels as categories on the x-axis
+        title: {
+          text: 'File Names'
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Average Confidence Level'
+        },
+        min: 0,
+        max: 100 // Assuming confidence level is a percentage between 0 and 100
+      },
+      title: {
+        text: 'Average Confidence Levels by File'
+      },
+      tooltip: {
+        y: {
+          formatter: function (val: string) {
+            return `${parseFloat(val).toFixed(2)}%`;  // Format the tooltip value to 2 decimal places
+          }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val: string) {
+          return `${parseFloat(val).toFixed(2)}%`;  // Display the value on the bar as a percentage with 2 decimals
+        }
+      },
+      colors: ['#00E396'],  // Optional: You can set the bar color
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '50%'
+        }
+      }
+    };
+
+    // You can then render this chart using your chart rendering library
+    // Example:
+    // ApexCharts, Chart.js, etc., depending on what you're using.
+  }
+
+
+
+}
