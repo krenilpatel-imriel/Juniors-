@@ -63,13 +63,13 @@
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Monthly Expenses</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Monthly Expenses</p>
         <apx-chart [series]="monthlyExpensesChart.series" [chart]="monthlyExpensesChart.chart" [xaxis]="monthlyExpensesChart.xaxis" [title]="monthlyExpensesChart.title"></apx-chart>
         <p class="text-gray-500 mt-2">This chart shows the total expenses per month. It helps in understanding spending trends and preparing monthly budgets.</p>
       </div>
 
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Top Vendors</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Top Vendors</p>
         <apx-chart [series]="topVendors.series" [chart]="topVendors.chart" [labels]="topVendors.labels" [title]="topVendors.title"></apx-chart>
         <p class="text-gray-500 mt-2">Review the expenses attributed to the top vendors. This information is useful for negotiating better terms and understanding vendor performance.</p>
       </div>
@@ -94,12 +94,12 @@
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Invoice Count by Date</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Date</p>
         <apx-chart [series]="invoiceCountByDate.series" [chart]="invoiceCountByDate.chart" [xaxis]="invoiceCountByDate.xaxis" [title]="invoiceCountByDate.title"></apx-chart>
         <p class="text-gray-500 mt-2">Track the number of invoices generated over time. This chart helps in identifying trends and planning for future invoicing.</p>
       </div>
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 mb-2 font-semibold">Invoice Amount Distribution</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Amount</p>
         <apx-chart [series]="invoiceAmountDistribution.series" [chart]="invoiceAmountDistribution.chart" [xaxis]="invoiceAmountDistribution.xaxis" [title]="invoiceAmountDistribution.title"></apx-chart>
         <p class="text-gray-500 mt-2">Analyze the distribution of invoice amounts. This chart helps in understanding how invoice amounts vary and managing financial forecasts.</p>
       </div>
@@ -119,25 +119,29 @@
     <table class="w-full text-left text-gray-700">
       <thead class="bg-gray-200 text-gray-600">
         <tr>
-          <th class="py-2 px-4">Date</th>
-          <th class="py-2 px-4">Amount</th>
+          <th class="py-2 px-4">FileName</th>
           <th class="py-2 px-4">Order Id</th>
+          <th class="py-2 px-4">Product</th>
+          <th class="py-2 px-4">Date</th>
           <th class="py-2 px-4">Vendor</th>
+          <th class="py-2 px-4">Amount</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let row of extractedData" class="border-b">
-          <td class="py-2 px-4">{{ row.OrderDate || 'N/A' }}</td>
-          <td class="py-2 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-          <td class="py-2 px-4">{{ row.OrderNo || 'N/A' }}</td>
-          <td class ="py-2 px-4">{{ row.SoldByName || 'N/A' }}</td>
+        <tr *ngFor="let row of extractedData; let idx = index"  class="border-b">
+          <td class ="py-4 px-4">{{productsWithFileNames[idx].fileName}}</td>
+          <td class="py-4 px-4">{{ row.OrderNo || 'N/A' }}</td>
+          <td class ="py-4 px-6">{{productsWithFileNames[idx].productName}}</td>
+          <td class="py-4 px-4">{{ row.OrderDate || 'N/A' }}</td>
+          <td class ="py-4 px-4">{{ row.SoldByName || 'N/A' }}</td>
+          <td class="py-4 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
         </tr>
       </tbody>
     </table>
 
     <!-- Display total GrandTotal at the bottom -->
     <div class="mt-4 text-right">
-      <p class="text-lg font-semibold">Total Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+      <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
     </div>
 
     <!-- Export to Excel Button -->

@@ -56,6 +56,7 @@ export class InsightsComponent {
   invoiceDistributionChart: any = [];
   amountInWordsChart: any = [];
   extractedData: any[] = [];
+  productsWithFileNames: { fileName: any, productName: any }[] = [];  
   totalGrandTotal: number = 0;
   monthlyExpenses = new Array(12).fill(0);
   invoiceCountsByDate: { [key: string]: number } = {};
@@ -76,12 +77,24 @@ export class InsightsComponent {
   ngOnInit(): void {
   }
   extractValues() {
-    this.extractedData = []; // Clear any previous data
+    this.extractedData = []; 
+
+    this.pdfResponse.forEach((record: any) => {
+      const fileName = record.jsoNfilename || 'Unknown'; 
+    
+      record.jsoNcontent.Tables[0].Cells.forEach((cell: any) => {
+          if (cell.Kind === 'content' && cell.ColumnIndex === 1 && cell.RowIndex === 1) {
+            const productName = cell.Content.split('|')[0];
+            this.productsWithFileNames.push({ fileName, productName });
+          }
+        });
+      });
+    console.log("products with files", this.productsWithFileNames); 
+
 
     this.pdfResponse.forEach((record: PdfResponse) => {
       const extractedRow: any = {};
 
-      // Iterate through PdfValues to extract fields like GrandTotal, OrderDate, etc.
       record.jsoNcontent.PdfValues.forEach((pdfValue: any) => {
         const field = pdfValue.FieldName;
         const value = pdfValue.FieldValue;
@@ -179,61 +192,29 @@ export class InsightsComponent {
       }
       return dateB.getMonth() - dateA.getMonth(); // Sort by month
     });
-    // this.calculateTotalGrandTotal();
+    this.calculateTotalGrandTotal();
 
-    // const confidenceData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
-    // const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
+    const confidenceData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
+    const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
 
-    // Flatten the PdfValues arrays into a single array
-const confidenceData = this.pdfResponse
-.flatMap(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
-
-const confidenceLabels = this.pdfResponse
-.flatMap(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
-
-this.confidenceChart = {
-  series: [{
-    name: 'Confidence Level',
-    data: confidenceData ? confidenceData : []
-  }],
-  chart: {
-    type: 'bar',
-    height: 350
-  },
-  xaxis: {
-    categories: confidenceLabels,  // Field names as categories on the x-axis
-    title: {
-      text: 'Field Names'
-    }
-  },
-  yaxis: {
-    title: {
-      text: 'Confidence Level'
-    }
-  },
-  title: {
-    text: 'Confidence Levels by Field'
-  }
-};
-
-
-    // this.confidenceChart = {
-    //   series: [{
-    //     name: 'Confidence Level',
-    //     data: confidenceData ? confidenceData : []
-    //   }],
-    //   chart: {
-    //     type: 'bar',
-    //     height: 350
-    //   },
-    //   labels: confidenceLabels,
-    //   xaxis: {
-    //     categories: confidenceLabels
-    //   },
-    //   title: {
-    //     text: 'Confidence Levels by Field'
-    //   }
-    // };
+    
+    this.confidenceChart = {
+      series: [{
+        name: 'Confidence Level',
+        data: confidenceData ? confidenceData : []
+      }],
+      chart: {
+        type: 'bar',
+        height: 350
+      },
+      labels: confidenceLabels,
+      xaxis: {
+        categories: confidenceLabels
+      },
+      title: {
+        text: 'Confidence Levels by Field'
+      }
+    };
 
     // // Extract TotalTaxAmount and GrandTotal from the PdfResponse
     // const invoiceValues = this.pdfResponse
@@ -413,9 +394,6 @@ this.invoiceDistributionChart = {
       },
       xaxis: {
         categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      },
-      title: {
-        text: 'Monthly Expenses'
       }
     };
 
@@ -497,10 +475,10 @@ this.invoiceDistributionChart = {
         height: 350
       },
       xaxis: {
-        categories: categories // Use the formatted dates as categories
-      },
-      title: {
-        text: 'Invoice Count by Date'
+        categories: categories, // Use the formatted dates as categories
+        title: {
+          text: 'Date (DD/MM)' 
+        }
       }
     };
 
@@ -536,10 +514,10 @@ this.invoiceDistributionChart = {
         height: 350
       },
       xaxis: {
-        categories: categoriesPrice
-      },
-      title: {
-        text: 'Invoice Amount Distribution'
+        categories: categoriesPrice,
+        title: {
+          text: 'Price in ₹' 
+        }
       }
     };
 
