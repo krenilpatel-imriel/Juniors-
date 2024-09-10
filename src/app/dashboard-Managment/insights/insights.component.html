@@ -2,156 +2,209 @@
   <!-- File Processing Overview -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
+      <svg class="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path>
+      </svg>
       File Processing Overview
     </h2>
     <p class="text-gray-600 mb-6">
-      Gain insights into the efficiency and effectiveness of our file processing operations. Track the total number of files processed and analyze key performance indicators to identify trends and areas for improvement.
+      Gain insights into the efficiency and effectiveness of our file processing operations. Track the total number of
+      files processed and analyze key performance indicators to identify trends and areas for improvement.
     </p>
     <div class="flex flex-col md:flex-row gap-6 mb-6">
       <div class="flex-1 bg-white shadow-sm rounded-lg p-4">
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Files Processed</h3>
         <p class="text-3xl font-bold text-gray-900 mb-2">{{ totalFilesProcessed }}</p>
-        <p class="text-gray-500">This metric shows the total number of files processed over the selected period. Use this to gauge the overall volume of work handled by the system.</p>
+        <p class="text-gray-500">This metric shows the total number of files processed over the selected period. Use
+          this to gauge the overall volume of work handled by the system.</p>
       </div>
+      <button (click)="exportDivsToPdf()">Export to PDF</button>
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-1/2 bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 mb-2 font-semibold">Processing Success vs. Failure</p>
-        <apx-chart [series]="processingSuccessFail.series" [chart]="processingSuccessFail.chart" [labels]="processingSuccessFail.labels" [title]="processingSuccessFail.title"></apx-chart>
-        <p class="text-gray-500 mt-2">This chart displays the ratio of successfully processed files to those that failed. Use it to evaluate the effectiveness of our file processing procedures.</p>
+        <apx-chart [series]="processingSuccessFail.series" [chart]="processingSuccessFail.chart"
+          [labels]="processingSuccessFail.labels" [title]="processingSuccessFail.title"></apx-chart>
+        <p class="text-gray-500 mt-2">This chart displays the ratio of successfully processed files to those that
+          failed. Use it to evaluate the effectiveness of our file processing procedures.</p>
       </div>
-        <!-- Confidence Levels by Field -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path></svg>
-      Confidence Levels by Field
-    </h2>
-    <apx-chart [series]="confidenceChart.series" [chart]="confidenceChart.chart" [labels]="confidenceChart.labels" [xaxis]="confidenceChart.xaxis" [title]="confidenceChart.title"></apx-chart>
-    <p class="text-gray-500 mt-2">This chart shows the confidence levels of various fields extracted from the processed PDFs.</p>
-  </div>
+
+      <!-- Invoice Amount Distribution -->
+      <div class="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between align-middle invoice-amount-div">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path>
+          </svg>
+          Invoice Amount Distribution
+        </h2>
+        <apx-chart [series]="invoiceDistributionChart.series" [chart]="invoiceDistributionChart.chart"
+          [labels]="invoiceDistributionChart.labels" [title]="invoiceDistributionChart.title"></apx-chart>
+        <div class="mt-4 text-right">
+          <p class="text-lg font-semibold">Total Tax Paid: ₹{{ totalTaxAmountShown | number:'1.2-2' }}</p>
+          <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+        </div>
+        <p class="text-gray-500 mt-2">This chart displays the distribution of Total Tax Amount and Grand Total within
+          the invoice.</p>
+      </div>
+
     </div>
   </div>
 
-  <!-- Invoice Amount Distribution -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path>
-      </svg>
-      Invoice Amount Distribution
-    </h2>
-    <apx-chart [series]="invoiceDistributionChart.series" [chart]="invoiceDistributionChart.chart" [labels]="invoiceDistributionChart.labels" [title]="invoiceDistributionChart.title"></apx-chart>
-    <p class="text-gray-500 mt-2">This chart displays the distribution of Total Tax Amount and Grand Total within the invoice.</p>
-  </div>
+
+
 
   <!-- Expense Overview -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+  <div class="mb-8 bg-white shadow-md rounded-lg p-6 expense-overview-div">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18m-3 4h3m-6-4h3m-6 4h3m-6-8h6"></path></svg>
+      <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 10h18M3 6h18M3 14h18m-3 4h3m-6-4h3m-6 4h3m-6-8h6"></path>
+      </svg>
       Expense Overview
     </h2>
     <p class="text-gray-600 mb-6">
-      Analyze and track the overall expenses and their distribution across various categories. This section provides a comprehensive view of spending patterns and helps in budget planning.
+      Analyze and track the overall expenses and their distribution across various categories. This section provides a
+      comprehensive view of spending patterns and helps in budget planning.
     </p>
     <div class="flex flex-col md:flex-row gap-6 mb-6">
       <div class="flex-1 bg-white shadow-sm rounded-lg p-4">
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Expenses</h3>
         <p class="text-3xl font-bold text-gray-900 mb-2">₹ {{ totalExpenses }}</p>
-        <p class="text-gray-500">Represents the total expenses incurred over a given period. This figure is crucial for financial planning and monitoring expenditure.</p>
+        <p class="text-gray-500">Represents the total expenses incurred over a given period. This figure is crucial for
+          financial planning and monitoring expenditure.</p>
       </div>
     </div>
-    <div class="flex flex-col md:flex-row gap-6">
-      <div class="w-full bg-white shadow-sm rounded-lg p-4">
+    <div class="flex flex-col md:flex-row gap-6 " id="container-selector">
+      <div class="w-1/2 bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 text-2xl mb-2 font-bold">Monthly Expenses</p>
-        <apx-chart [series]="monthlyExpensesChart.series" [chart]="monthlyExpensesChart.chart" [xaxis]="monthlyExpensesChart.xaxis" [title]="monthlyExpensesChart.title"></apx-chart>
-        <p class="text-gray-500 mt-2">This chart shows the total expenses per month. It helps in understanding spending trends and preparing monthly budgets.</p>
+        <apx-chart [series]="monthlyExpensesChart.series" [chart]="monthlyExpensesChart.chart"
+          [xaxis]="monthlyExpensesChart.xaxis" [title]="monthlyExpensesChart.title"></apx-chart>
+        <p class="text-gray-500 mt-2">This chart shows the total expenses per month. It helps in understanding spending
+          trends and preparing monthly budgets.</p>
       </div>
 
-      <div class="w-full bg-white shadow-sm rounded-lg p-4">
+      <div class="w-1/2 h-full items-stretch flex flex-col justify-between align-middle shadow-sm rounded-lg">
         <p class="text-gray-800 text-2xl mb-2 font-bold">Top Vendors</p>
-        <apx-chart [series]="topVendors.series" [chart]="topVendors.chart" [labels]="topVendors.labels" [title]="topVendors.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Review the expenses attributed to the top vendors. This information is useful for negotiating better terms and understanding vendor performance.</p>
+        <apx-chart [series]="topVendors.series" [chart]="topVendors.chart" [labels]="topVendors.labels"
+          [title]="topVendors.title"></apx-chart>
+        <p class="text-gray-500 mt-2">Review the expenses attributed to the top vendors. This information is useful for
+          negotiating better terms and understanding vendor performance.</p>
       </div>
     </div>
   </div>
 
   <!-- Invoice Details -->
-  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+  <div class="mb-8 bg-white shadow-md rounded-lg p-6 invoice-details-div">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-      <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path></svg>
+      <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M5 3v14a2 2 0 002 2h10a2 2 0 002-2V7l-5-4H7a2 2 0 00-2 2z"></path>
+      </svg>
       Invoice Details
     </h2>
     <p class="text-gray-600 mb-6">
-      Get detailed insights into invoice amounts and their distribution. This section helps in monitoring invoice trends and ensuring timely payments.
+      Get detailed insights into invoice amounts and their distribution. This section helps in monitoring invoice trends
+      and ensuring timely payments.
     </p>
     <div class="flex flex-col md:flex-row gap-6 mb-6">
       <div class="flex-1 bg-white shadow-sm rounded-lg p-4">
         <h3 class="text-lg font-semibold text-gray-700 mb-2">Average Invoice Amount</h3>
         <p class="text-3xl font-bold text-gray-900 mb-2">₹ {{ averageInvoiceAmount }}</p>
-        <p class="text-gray-500">Displays the average amount per invoice. This metric helps in understanding billing patterns and managing cash flow effectively.</p>
+        <p class="text-gray-500">Displays the average amount per invoice. This metric helps in understanding billing
+          patterns and managing cash flow effectively.</p>
       </div>
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Date</p>
-        <apx-chart [series]="invoiceCountByDate.series" [chart]="invoiceCountByDate.chart" [xaxis]="invoiceCountByDate.xaxis" [title]="invoiceCountByDate.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Track the number of invoices generated over time. This chart helps in identifying trends and planning for future invoicing.</p>
+        <apx-chart [series]="invoiceCountByDate.series" [chart]="invoiceCountByDate.chart"
+          [xaxis]="invoiceCountByDate.xaxis" [title]="invoiceCountByDate.title"></apx-chart>
+        <p class="text-gray-500 mt-2">Track the number of invoices generated over time. This chart helps in identifying
+          trends and planning for future invoicing.</p>
       </div>
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Amount</p>
-        <apx-chart [series]="invoiceAmountDistribution.series" [chart]="invoiceAmountDistribution.chart" [xaxis]="invoiceAmountDistribution.xaxis" [title]="invoiceAmountDistribution.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Analyze the distribution of invoice amounts. This chart helps in understanding how invoice amounts vary and managing financial forecasts.</p>
+        <apx-chart [series]="invoiceAmountDistribution.series" [chart]="invoiceAmountDistribution.chart"
+          [xaxis]="invoiceAmountDistribution.xaxis" [title]="invoiceAmountDistribution.title"></apx-chart>
+        <p class="text-gray-500 mt-2">Analyze the distribution of invoice amounts. This chart helps in understanding how
+          invoice amounts vary and managing financial forecasts.</p>
       </div>
     </div>
   </div>
 
- <!-- Recent Transactions -->
-<div class="mb-8 bg-white shadow-md rounded-lg p-6">
-  <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-    <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"></path></svg>
-    Recent Transactions
-  </h2>
-  <p class="text-gray-600 mb-6">
-    Keep track of the most recent transactions to stay updated with the latest financial activities. This section provides a quick overview of recent transaction data.
-  </p>
-  <div class="bg-white shadow-sm rounded-lg p-4">
-    <table class="w-full text-left text-gray-700">
-      <thead class="bg-gray-200 text-gray-600">
-        <tr>
-          <th class="py-2 px-4">FileName</th>
-          <th class="py-2 px-4">Order Id</th>
-          <th class="py-2 px-4">Product</th>
-          <th class="py-2 px-4">Date</th>
-          <th class="py-2 px-4">Vendor</th>
-          <th class="py-2 px-4">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of extractedData; let idx = index"  class="border-b">
-          <td class ="py-4 px-4">{{productsWithFileNames[idx].fileName}}</td>
-          <td class="py-4 px-4">{{ row.OrderNo || 'N/A' }}</td>
-          <td class ="py-4 px-6">{{productsWithFileNames[idx].productName}}</td>
-          <td class="py-4 px-4">{{ row.OrderDate || 'N/A' }}</td>
-          <td class ="py-4 px-4">{{ row.SoldByName || 'N/A' }}</td>
-          <td class="py-4 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Confidence Levels by Field -->
+  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+      <svg class="w-6 h-6 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"></path>
+      </svg>
+      Confidence Levels by Field
+    </h2>
+    <apx-chart [series]="confidenceChart.series" [chart]="confidenceChart.chart" [labels]="confidenceChart.labels"
+      [xaxis]="confidenceChart.xaxis" [title]="confidenceChart.title"></apx-chart>
+    <p class="text-gray-500 mt-2">This chart shows the confidence levels of various fields extracted from the processed
+      PDFs.</p>
+  </div>
 
-    <!-- Display total GrandTotal at the bottom -->
-    <div class="mt-4 text-right">
-      <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
-    </div>
+  <!-- Recent Transactions -->
+  <div class="mb-8 bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+      <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"></path>
+      </svg>
+      Recent Transactions
+    </h2>
+    <p class="text-gray-600 mb-6">
+      Keep track of the most recent transactions to stay updated with the latest financial activities. This section
+      provides a quick overview of recent transaction data.
+    </p>
+    <div class="bg-white shadow-sm rounded-lg p-4">
+      <table class="w-full text-left text-gray-700">
+        <thead class="bg-gray-200 text-gray-600">
+          <tr>
+            <th class="py-2 px-4">File No.</th>
+            <th class="py-2 px-4">FileName</th>
+            <th class="py-2 px-4">Order Id</th>
+            <th class="py-2 px-4">Product</th>
+            <th class="py-2 px-4">Vendor</th>
+            <th class="py-2 px-4">Date</th>
+            <th class="py-2 px-4">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of extractedData; let idx = index" class="border-b">
+            <td class="py-4 px-4">F{{idx + 1}}</td>
+            <td class="py-4 px-4">{{productsWithFileNames[idx].fileName}}</td>
+            <td class="py-4 px-4">{{ row.OrderNo || 'N/A' }}</td>
+            <td class="py-4 px-6">{{productsWithFileNames[idx].productName}}</td>
+            <td class="py-4 px-4">{{ row.SoldByName || 'N/A' }}</td>
+            <td class="py-4 px-4">{{ row.OrderDate || 'N/A' }}</td>
+            <td class="py-4 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <!-- Export to Excel Button -->
-    <div class="mt-4 text-right">
-      <button (click)="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded">
-        Export to Excel
-      </button>
+      <!-- Display total GrandTotal at the bottom -->
+      <div class="mt-4 text-right">
+        <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+      </div>
+
+      <!-- Export to Excel Button -->
+      <div class="mt-4 text-right">
+        <button (click)="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded">
+          Export to Excel
+        </button>
+      </div>
     </div>
   </div>
 </div>
-
+<div class="print-pdf">
 
 </div>

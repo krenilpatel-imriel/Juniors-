@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FileResponse, PdfResponse } from 'src/app/Models/fileResponseModel';
 import { FileUploadService } from 'src/app/services/fileUpload.service';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -61,7 +63,8 @@ export class InsightsComponent {
   monthlyExpenses = new Array(12).fill(0);
   invoiceCountsByDate: { [key: string]: number } = {};
   invoiceCategories: string[] = [];
-
+  totalTaxAmountShown : number = 0;
+  
 
   constructor(private fileService: FileUploadService) {
 
@@ -194,78 +197,15 @@ export class InsightsComponent {
     });
     this.calculateTotalGrandTotal();
 
-    const confidenceData = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.Confidence));
-    const confidenceLabels = this.pdfResponse.map(j => j.jsoNcontent.PdfValues.map(i => i.FieldName));
-
     
-    this.confidenceChart = {
-      series: [{
-        name: 'Confidence Level',
-        data: confidenceData ? confidenceData : []
-      }],
-      chart: {
-        type: 'bar',
-        height: 350
-      },
-      labels: confidenceLabels,
-      xaxis: {
-        categories: confidenceLabels
-      },
-      title: {
-        text: 'Confidence Levels by Field'
-      }
-    };
-
-    // // Extract TotalTaxAmount and GrandTotal from the PdfResponse
-    // const invoiceValues = this.pdfResponse
-    //   .flatMap(j =>
-    //     j.jsoNcontent.PdfValues
-    //       .filter(i => (i.FieldName === 'TotalTaxAmount' || i.FieldName === 'GrandTotal') && i.FieldValue !== null)
-    //       .map(i => i.FieldValue ? parseFloat(i.FieldValue.replace(/₹|,/g, '')) : 0) // Parse the amount, remove currency symbols
-    //   )
-    //   .filter(value => !isNaN(value)); // Filter out any NaN values
-    //   console.log("invoiceValues", this.pdfResponse.map(j => j.jsoNcontent.PdfValues))
-    // // Extract categories for the chart (FieldName for TotalTaxAmount and GrandTotal)
-    // if(this.pdfResponse && this.pdfResponse[0] && this.pdfResponse[0].jsoNcontent.PdfValues){
-    //   this.invoiceCategories = this.pdfResponse[0].jsoNcontent.PdfValues
-    //     .filter(i => (i.FieldName === 'TotalTaxAmount' || i.FieldName === 'GrandTotal') && i.FieldValue !== null)
-    //     .map(i => i.FieldName);
-    // }  
-
-    // // Log to verify the extracted data
-    // // console.log("Invoice Values:", invoiceValues);
-    // // console.log("Invoice Categories:", this.invoiceCategories);
-
-    // // Update the chart configuration with TotalTaxAmount and GrandTotal values
-    // this.invoiceDistributionChart = {
-    //   series: invoiceValues ? invoiceValues : [], // Valid invoice values
-    //   chart: {
-    //     type: 'pie',
-    //     height: 350
-    //   },
-    //   labels: this.invoiceCategories, // Corresponding FieldName for TotalTaxAmount and GrandTotal
-    //   title: {
-    //     text: 'Invoice Amount Distribution'
-    //   },
-    //   responsive: [
-    //     {
-    //       breakpoint: 480,
-    //       options: {
-    //         chart: {
-    //           width: 200
-    //         },
-    //         legend: {
-    //           position: 'bottom'
-    //         }
-    //       }
-    //     }
-    //   ]
-    // };
+    // Flatten the PdfValues arrays into a single array
+    const totalFilesProcessed = this.pdfResponse.length; // Or any other way to calculate total files processed
+    this.generateConfidenceChart(totalFilesProcessed, this.pdfResponse);
 
 // Step 1: Extract and sum the GrandTotal and TotalTaxAmount values
 let totalGrandTotal = 0;
 let totalTaxAmount = 0;
- 
+
 this.pdfResponse.forEach(j => {
   j.jsoNcontent.PdfValues.forEach(i => {
     if (i.FieldName === 'GrandTotal' && i.FieldValue !== null) {
@@ -274,19 +214,20 @@ this.pdfResponse.forEach(j => {
     }
     if (i.FieldName === 'TotalTaxAmount' && i.FieldValue !== null) {
       const taxAmountValue = i.FieldValue ? i.FieldValue.replace(/₹|,/g, '') : '0';
-      totalTaxAmount += parseFloat(taxAmountValue); // Safely parse the value
+      totalTaxAmount += parseFloat(taxAmountValue); 
+      this.totalTaxAmountShown = totalTaxAmount// Safely parse the value
     }
   });
 });
- 
+
 // Step 2: Calculate the percentage of TotalTaxAmount out of GrandTotal
 const taxPercentageOfGrandTotal = (totalTaxAmount / totalGrandTotal) * 100;
- 
+
 // Step 3: Format values to two decimal places
 const formattedTaxAmount = parseFloat(totalTaxAmount.toFixed(2));
 let formattedGrandTotal = totalGrandTotal - formattedTaxAmount;
 formattedGrandTotal = parseFloat(formattedGrandTotal.toFixed(2));
- 
+
 // Step 4: Create the chart and display the relevant information
 this.invoiceDistributionChart = {
   series: [formattedGrandTotal, formattedTaxAmount], // Series with the sum of GrandTotal and TotalTaxAmount
@@ -312,7 +253,7 @@ this.invoiceDistributionChart = {
     }
   ]
 };
- 
+
 
     this.paidUnpaidInvoices = {
       series: [60, 40],
@@ -366,8 +307,6 @@ this.invoiceDistributionChart = {
       }
     };
 
-    // console.log("grandtotal", this.extractedData);
-    // Iterate through the extracted data
     this.extractedData.forEach((item) => {
       const orderDate = this.parseDate(item.OrderDate);
       const grandTotal = parseFloat(item.GrandTotal);
@@ -398,8 +337,6 @@ this.invoiceDistributionChart = {
     };
 
 
-
-    // Create an object to hold the totals for each BillToName
     const vendorTotals: { [key: string]: number } = {};
 
     // Iterate through the extracted data
@@ -415,7 +352,6 @@ this.invoiceDistributionChart = {
       }
     });
 
-    // Extract labels (vendor names) and data (totals) from the vendorTotals object
     const vendorLabels = Object.keys(vendorTotals); // BillToName values
     const vendorData = Object.values(vendorTotals).map(total => parseFloat(total.toFixed(2))); // Corresponding GrandTotal values
 
@@ -424,7 +360,7 @@ this.invoiceDistributionChart = {
       series: vendorData, // Use the accumulated GrandTotal values
       chart: {
         type: 'pie',
-        height: 350
+        height: 450
       },
       labels: vendorLabels, // Use the BillToName values as labels
       responsive: [
@@ -432,7 +368,7 @@ this.invoiceDistributionChart = {
           breakpoint: 480,
           options: {
             chart: {
-              width: 200
+              width: 300,
             },
             legend: {
               position: 'bottom'
@@ -454,6 +390,7 @@ this.invoiceDistributionChart = {
       }
     });
 
+    this.calculateTotalGrandTotal();
     // Generate categories and data arrays for the chart
     const categories: string[] = [];
     const datedata: number[] = [];
@@ -642,22 +579,22 @@ this.invoiceDistributionChart = {
       fgColor: { argb: '3B82F6' } // Light blue background
     };
     superHeader.height = 40; // Adjust row height for super header
-    worksheet.mergeCells('A1:D1'); // Merge cells for the super header
+    worksheet.mergeCells('A1:G1'); // Merge cells for the super header
   
     // Define the header
-    const header = ['Date', 'Amount', 'Order Id', 'Vendor'];
+    const header = ['File No.', 'FileName', 'Order Id', 'Product', 'Vendor', 'Date', 'Amount'];
   
     // Add header row
     const headerRow = worksheet.addRow(header);
   
-    // Apply header styling (light green background)
+    // Apply header styling (light gray background and text color)
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-      cell.font = { bold: true };
+      cell.font = { bold: true, color: { argb: '4B4B4B' } }; // Gray text color
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: '90EE90' } // Light green background
+        fgColor: { argb: 'E5E5E5' } // Light gray background
       };
       cell.border = {
         bottom: { style: 'thin' }
@@ -665,34 +602,40 @@ this.invoiceDistributionChart = {
     });
   
     // Prepare the data rows
-    this.extractedData.forEach(row => {
+    this.extractedData.forEach((row, idx) => {
       const dataRow = worksheet.addRow([
-        row.OrderDate || 'N/A',
-        `₹${row.GrandTotal || 'N/A'}`,
-        `${row.OrderNo || 'N/A'}`,
-        `${row.SoldByName || 'N/A'}`
+        `F${idx + 1}`, // File No.
+        this.productsWithFileNames[idx]?.fileName || 'Unknown', // FileName
+        row.OrderNo || 'N/A', // Order Id
+        this.productsWithFileNames[idx]?.productName || 'N/A', // Product
+        row.SoldByName || 'N/A', // Vendor
+        row.OrderDate || 'N/A', // Date
+        `₹${row.GrandTotal || 'N/A'}` // Amount
       ]);
   
       // Make amount values bold and green
-      dataRow.getCell(2).font = { bold: true, color: { argb: '008000' } }; // Green color
+      dataRow.getCell(7).font = { bold: true, color: { argb: '008000' } }; // Green color for Amount
     });
   
     // Add the total row
     const totalRow = worksheet.addRow([
-      '', // Empty cell for Date
-      `Grand Total: ₹${this.totalGrandTotal.toFixed(2)}`, // Amount
+      '', // Empty cell for File No.
+      '', // Empty cell for FileName
       '', // Empty cell for Order Id
-      ''
+      '', // Empty cell for Product
+      '', // Empty cell for Vendor
+      '', // Empty cell for Date
+      `Grand Total: ₹${this.totalGrandTotal.toFixed(2)}` // Amount
     ]);
   
     // Make grand total bold
-    totalRow.getCell(2).font = { bold: true };
+    totalRow.getCell(7).font = { bold: true };
   
     // Apply styling to all rows (make the rest of the rows white)
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-      row.height = 25; // Increase row height
+      row.height = 35; // Increase row height
       row.eachCell({ includeEmpty: true }, (cell) => {
-        cell.alignment = { horizontal: 'center', vertical: 'middle' }; // Center and middle alignment
+        cell.alignment = { horizontal: 'left', vertical: 'middle' }; // Center and middle alignment
         if (rowNumber > 1 && rowNumber !== worksheet.rowCount) { // Skip the super header and the grand total row
           cell.fill = {
             type: 'pattern',
@@ -710,11 +653,14 @@ this.invoiceDistributionChart = {
     });
   
     // Set column widths
-    worksheet.getColumn(1).width = 20; // Date column
-    worksheet.getColumn(2).width = 25; // Amount column
-    worksheet.getColumn(3).width = 50; // Description column
-    worksheet.getColumn(4).width = 50;
-
+    worksheet.getColumn(1).width = 15; // File No.
+    worksheet.getColumn(2).width = 30; // FileName
+    worksheet.getColumn(3).width = 20; // Order Id
+    worksheet.getColumn(4).width = 60; // Product
+    worksheet.getColumn(5).width = 30; // Vendor
+    worksheet.getColumn(6).width = 20; // Date
+    worksheet.getColumn(7).width = 25; // Amount
+  
     // Export the workbook
     await workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -726,4 +672,116 @@ this.invoiceDistributionChart = {
       window.URL.revokeObjectURL(url);
     });
   }
-}  
+  
+
+  generateConfidenceChart(totalFilesProcessed: number, pdfResponse: any[]) {
+    // Step 1: Generate confidence labels (L1, L2, L3, ..., L{totalFilesProcessed})
+    const confidenceLabels = Array.from({ length: totalFilesProcessed }, (_, index) => `F${index + 1}`);
+
+    // Step 2: Calculate the average confidence for each file in pdfResponse
+    const confidenceData = pdfResponse.map(j => {
+      const confidences = j.jsoNcontent.PdfValues.map((i: { Confidence: number }) => i.Confidence);
+
+      // Calculate the average confidence for this file
+      const totalConfidence = confidences.reduce((sum: any, value: any) => sum + value, 0);
+      const averageConfidence = totalConfidence / confidences.length;
+
+      return parseFloat(averageConfidence.toFixed(2));  // Format to 2 decimal places
+    });
+
+    // Step 3: Configure the confidence chart
+    this.confidenceChart = {
+      series: [{
+        name: 'Average Confidence Level',
+        data: confidenceData ? confidenceData : []  // Average confidence data for each file
+      }],
+      chart: {
+        type: 'bar',
+        height: 350
+      },
+      xaxis: {
+        categories: confidenceLabels,  // Generated labels as categories on the x-axis
+        title: {
+          text: 'File Names'
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Average Confidence Level'
+        },
+        min: 0,
+        max: 100 // Assuming confidence level is a percentage between 0 and 100
+      },
+      title: {
+        text: 'Average Confidence Levels by File'
+      },
+      tooltip: {
+        y: {
+          formatter: function (val: string) {
+            return `${parseFloat(val).toFixed(2)}%`;  // Format the tooltip value to 2 decimal places
+          }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val: string) {
+          return `${parseFloat(val).toFixed(2)}%`;  // Display the value on the bar as a percentage with 2 decimals
+        }
+      },
+      colors: ['#00E396'],  // Optional: You can set the bar color
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '50%'
+        }
+      }
+    };
+}
+
+exportDivsToPdf(): void {
+  const invoiceDistributionDiv = document.querySelector('.invoice-amount-div') as HTMLElement;
+  const expenseOverviewDiv = document.querySelector('.expense-overview-div') as HTMLElement;
+  const invoiceDetailsDiv = document.querySelector('.invoice-details-div') as HTMLElement;
+  
+  const container = document.querySelector('.print-pdf') as HTMLElement;
+  container.classList.remove("hidden");
+
+  container.appendChild(invoiceDistributionDiv.cloneNode(true));
+  container.appendChild(expenseOverviewDiv.cloneNode(true));
+
+  console.log(container);
+
+  html2canvas(container).then(canvas => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4'); 
+
+    const imgWidth = 210; 
+    const pageHeight = 295; 
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    pdf.addPage();
+
+    container.innerHTML = '';
+    container.appendChild(invoiceDetailsDiv.cloneNode(true));
+
+    html2canvas(container).then(thirdCanvas => {
+      const thirdImgData = thirdCanvas.toDataURL('image/png');
+      const thirdImgHeight = (thirdCanvas.height * imgWidth) / thirdCanvas.width;
+
+      pdf.addImage(thirdImgData, 'PNG', 0, 0, imgWidth, thirdImgHeight);
+
+      pdf.save('viewvoice-report.pdf');
+      
+      container.classList.add("hidden");
+      container.innerHTML = "";
+    });
+  });
+}
+
+
+}
