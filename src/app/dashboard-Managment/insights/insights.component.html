@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="flex flex-col md:flex-row gap-6">
-      <div class="w-1/2 bg-white shadow-sm rounded-lg p-4">
+      <div class="w-2/5 bg-white shadow-sm rounded-lg p-4">
         <p class="text-gray-800 mb-2 font-semibold">Processing Success vs. Failure</p>
         <apx-chart [series]="processingSuccessFail.series" [chart]="processingSuccessFail.chart"
           [labels]="processingSuccessFail.labels" [title]="processingSuccessFail.title"></apx-chart>
@@ -30,7 +30,7 @@
       </div>
 
       <!-- Invoice Amount Distribution -->
-      <div class="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between align-middle invoice-amount-div">
+      <div class="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between align-middle invoice-amount-div w-3/5">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
           <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +43,8 @@
           [labels]="invoiceDistributionChart.labels" [title]="invoiceDistributionChart.title"></apx-chart>
         <div class="mt-4 text-right">
           <p class="text-lg font-semibold">Total Tax Paid: ₹{{ totalTaxAmountShown | number:'1.2-2' }}</p>
-          <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+          <p class="text-lg font-semibold  py-2 border-b-2">Net Total: ₹{{ totalNetAmountShown | number:'1.2-2' }}</p>
+          <p class="text-lg font-semibold py-2 ">Grand Total: <span class="text-green-700/80"> ₹{{ totalGrandTotal | number:'1.2-2' }}</span></p>
         </div>
         <p class="text-gray-500 mt-2">This chart displays the distribution of Total Tax Amount and Grand Total within
           the invoice.</p>
@@ -87,10 +88,10 @@
       </div>
 
       <div class="w-1/2 h-full items-stretch flex flex-col justify-between align-middle shadow-sm rounded-lg">
-        <p class="text-gray-800 text-2xl mb-2 font-bold">Top Vendors</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Top 10 Vendors</p>
         <apx-chart [series]="topVendors.series" [chart]="topVendors.chart" [labels]="topVendors.labels"
           [title]="topVendors.title"></apx-chart>
-        <p class="text-gray-500 mt-2">Review the expenses attributed to the top vendors. This information is useful for
+        <p class="text-gray-500 mt-2">Review the expenses attributed to the top 10 vendors. This information is useful for
           negotiating better terms and understanding vendor performance.</p>
       </div>
     </div>
@@ -229,7 +230,7 @@
 
       <!-- Display total GrandTotal at the bottom -->
       <div class="mt-4 text-right">
-        <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
+        <p class="text-lg font-semibold">Grand Total: <span class="text-green-700/80">₹ {{ totalGrandTotal | number:'1.2-2' }}</span></p>
       </div>
     </div>
 
@@ -241,6 +242,6 @@
 
   </div>
 </div>
-<div class="print-pdf">
+<div class="print-pdf bg-white">
 
 </div>

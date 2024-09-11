@@ -68,6 +68,7 @@ export class InsightsComponent {
   invoiceCountsByDate: { [key: string]: number } = {};
   invoiceCategories: string[] = [];
   totalTaxAmountShown : number = 0;
+  totalNetAmountShown : number = 0;
   displayedColumns: string[] = ['fileNo', 'fileName', 'orderNo', 'product', 'soldByName', 'orderDate', 'grandTotal'];
   dataSource = new MatTableDataSource<any>([]);
 
@@ -84,6 +85,265 @@ export class InsightsComponent {
     });
 
   }
+
+
+
+  initializeCharts(data: any) {
+    console.log("data:", data);
+
+    // Parse and process data
+    this.pdfResponse = data.records.map((record: any) => {
+      if (typeof record.jsoNcontent === 'string') {
+        try {
+          record.jsoNcontent = JSON.parse(record.jsoNcontent);
+        } catch (error) {
+          console.error('Error parsing JSON content:', error);
+        }
+      }
+      return record;
+    });
+
+    this.extractValues();
+    this.sortExtractedDataByOrderDate();
+    this.calculateTotalGrandTotal();
+
+    // Initialize charts
+    const totalFilesProcessed = this.pdfResponse.length;
+    this.generateConfidenceChart(totalFilesProcessed, this.pdfResponse);
+    this.initializeInvoiceDistributionChart();
+    this.initializePaidUnpaidInvoicesChart();
+    this.initializeProcessingSuccessFailChart();
+    this.initializeMonthlyExpensesChart();
+    this.initializeTopVendorsChart();
+    this.initializeInvoiceCountByDateChart();
+    this.initializeInvoiceAmountDistributionChart();
+}
+
+// Sorting extracted data by OrderDate
+sortExtractedDataByOrderDate() {
+    this.extractedData.sort((a, b) => {
+        const dateA = this.parseDate(a.OrderDate);
+        const dateB = this.parseDate(b.OrderDate);
+        return dateB.getFullYear() !== dateA.getFullYear()
+            ? dateB.getFullYear() - dateA.getFullYear()
+            : dateB.getMonth() - dateA.getMonth();
+    });
+}
+
+// Initialize the Invoice Distribution Chart
+initializeInvoiceDistributionChart() {
+    let totalGrandTotal = 0;
+    let totalTaxAmount = 0;
+
+    this.pdfResponse.forEach(j => {
+        j.jsoNcontent.PdfValues.forEach(i => {
+            if (i.FieldName === 'GrandTotal' && i.FieldValue) {
+                const grandTotalValue = i.FieldValue.replace(/₹|,/g, '') || '0';
+                totalGrandTotal += parseFloat(grandTotalValue);
+            }
+            if (i.FieldName === 'TotalTaxAmount' && i.FieldValue) {
+                const taxAmountValue = i.FieldValue.replace(/₹|,/g, '') || '0';
+                totalTaxAmount += parseFloat(taxAmountValue);
+            }
+        });
+    });
+
+    const taxPercentageOfGrandTotal = (totalTaxAmount / totalGrandTotal) * 100;
+    const formattedTaxAmount = parseFloat(totalTaxAmount.toFixed(2));
+    const formattedGrandTotal = parseFloat((totalGrandTotal - formattedTaxAmount).toFixed(2));
+    this.totalTaxAmountShown = formattedTaxAmount;
+    this.totalNetAmountShown = formattedGrandTotal;
+    this.invoiceDistributionChart = {
+        series: [formattedGrandTotal, formattedTaxAmount],
+        chart: { type: 'pie', height: 350 },
+        labels: ['Net Total', 'Total Tax Amount'],
+        title: { text: `Invoice Amount Distribution: Total Tax Amount is ${taxPercentageOfGrandTotal.toFixed(2)}% of Grand Total` },
+        responsive: [{ breakpoint: 480, options: { chart: { width: 200 }, legend: { position: 'bottom' } } }]
+    };
+}
+
+// Initialize the Paid vs. Unpaid Invoices Chart
+initializePaidUnpaidInvoicesChart() {
+    this.paidUnpaidInvoices = {
+        series: [60, 40],
+        chart: { type: 'radialBar', height: 350 },
+        labels: ['Paid', 'Unpaid'],
+        title: { text: 'Paid vs. Unpaid Invoices' }
+    };
+}
+
+// Initialize Processing Success/Fail Chart
+initializeProcessingSuccessFailChart() {
+    this.processingSuccessFail = {
+        series: this.successfulFiles || this.failedFiles ? [this.successfulFiles, this.failedFiles] : [],
+        chart: { type: 'donut' },
+        labels: ['Successful', 'Failed'],
+        responsive: [{ breakpoint: 400, options: { chart: { height: 180 }, legend: { position: 'bottom' } } }]
+    };
+}
+
+// Initialize Monthly Expenses Chart
+initializeMonthlyExpensesChart() {
+  const quarterlyExpenses: { [key: string]: number } = {};
+
+  // Accumulate expenses by quarter
+  this.extractedData.forEach(item => {
+      const orderDate = this.parseDate(item.OrderDate);
+      const grandTotal = parseFloat(item.GrandTotal);
+      const quarter = this.getQuarterforCharts(orderDate);
+      const quarterLabel = `${quarter}`; // Include the year in the label
+      quarterlyExpenses[quarterLabel] = (quarterlyExpenses[quarterLabel] || 0) + grandTotal;
+  });
+
+  // Sort the quarters by year and quarter
+  const sortedQuarterLabels = Object.keys(quarterlyExpenses).sort((a, b) => {
+      const [quarterA, yearA] = a.split(' ');
+      const [quarterB, yearB] = b.split(' ');
+
+      // Compare years first
+      const yearComparison = parseInt(yearA) - parseInt(yearB);
+      if (yearComparison !== 0) {
+          return yearComparison;
+      }
+
+      // Compare quarters if years are the same
+      const quarterOrder: { [key in 'Q1' | 'Q2' | 'Q3' | 'Q4']: number } = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
+      return quarterOrder[quarterA as keyof typeof quarterOrder] - quarterOrder[quarterB as keyof typeof quarterOrder];
+  });
+
+  // Prepare the chart data
+  const quarterLabels = sortedQuarterLabels.map(label => label);
+  const expenseValues = sortedQuarterLabels.map(label => parseFloat(quarterlyExpenses[label].toFixed(2)));
+
+  // Initialize the chart
+  this.monthlyExpensesChart = {
+      series: [{ name: 'Expenses', data: expenseValues }],
+      chart: { type: 'line', height: 350 },
+      xaxis: { categories: quarterLabels, title: { text: 'Quarter-Year' } },
+      yaxis: { title: { text: 'Total Expenses' }, labels: { formatter: (value: number) => value.toFixed(2) } },
+      tooltip: { y: { formatter: (value: number) => value.toFixed(2) } }
+  };
+}
+
+
+// Initialize Top Vendors Chart
+initializeTopVendorsChart() {
+  const vendorTotals: { [key: string]: number } = {};
+
+  // Accumulate totals for each vendor
+  this.extractedData.forEach(item => {
+      const soldByName = item.SoldByName;
+      const grandTotal = parseFloat(item.GrandTotal) || 0;
+      vendorTotals[soldByName] = (vendorTotals[soldByName] || 0) + grandTotal;
+  });
+
+  // Sort vendors by total amount in descending order and get the top 10
+  const sortedVendors = Object.entries(vendorTotals)
+      .sort(([, totalA], [, totalB]) => totalB - totalA)
+      .slice(0, 10);
+
+  // Prepare series data for the chart
+  const seriesData = sortedVendors.map(([vendor, total]) => ({
+      name: vendor,
+      data: [parseFloat(total.toFixed(2))]
+  }));
+
+  // Extract labels and values separately for the pie chart
+  const vendorLabels = sortedVendors.map(([vendor]) => vendor);
+  const vendorData = sortedVendors.map(([, total]) => parseFloat(total.toFixed(2)));
+
+  // Initialize the chart
+  this.topVendors = {
+      series: vendorData,
+      chart: { type: 'pie', height: 450 },
+      labels: vendorLabels,
+      tooltip: {
+          y: {
+              formatter: (value: number) => `₹${value.toFixed(2)}` // Format tooltip with rupee symbol
+          }
+      },
+      responsive: [
+          { breakpoint: 480, options: { chart: { width: 300 }, legend: { position: 'bottom' } } }
+      ]
+  };
+}
+
+
+// Initialize Invoice Count by Date Chart
+initializeInvoiceCountByDateChart() {
+  const invoiceCountsByQuarter: { [key: string]: number } = {};
+
+  // Count invoices by quarter
+  this.extractedData.forEach(item => {
+      const orderDate = this.parseDate(item.OrderDate);
+      const quarterLabel = this.getQuarterLabel(orderDate); // Example format: 'Q1 2023'
+      invoiceCountsByQuarter[quarterLabel] = (invoiceCountsByQuarter[quarterLabel] || 0) + 1;
+  });
+
+  // Sort the quarter labels by year and quarter
+  const sortedQuarterLabels = Object.keys(invoiceCountsByQuarter).sort((a, b) => {
+      const [quarterA, yearA] = a.split(' '); // e.g., ['Q1', '2023']
+      const [quarterB, yearB] = b.split(' ');
+
+      // First sort by year
+      const yearComparison = parseInt(yearA) - parseInt(yearB);
+      if (yearComparison !== 0) {
+          return yearComparison;
+      }
+
+      // If the year is the same, sort by quarter number
+      const quarterOrder: { [key in 'Q1' | 'Q2' | 'Q3' | 'Q4']: number } = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
+
+      return quarterOrder[quarterA as keyof typeof quarterOrder] - quarterOrder[quarterB as keyof typeof quarterOrder];
+  });
+
+  // Map the sorted quarter labels to chart data
+  const categories = sortedQuarterLabels.map(label => label);
+  const data = sortedQuarterLabels.map(label => invoiceCountsByQuarter[label]);
+
+  // Set up the chart configuration
+  this.invoiceCountByDate = {
+      series: [{ name: 'Invoices', data }],
+      chart: { type: 'bar', height: 350 },
+      xaxis: { categories, title: { text: 'Quarter-Year' } },
+      yaxis: { title: { text: 'Total Invoices' } }
+  };
+}
+
+
+
+
+// Initialize Invoice Amount Distribution Chart
+initializeInvoiceAmountDistributionChart() {
+    const priceRanges = [
+        { range: '0 - 1000', min: 0, max: 1000, count: 0 },
+        { range: '1000 - 5000', min: 1000, max: 5000, count: 0 },
+        { range: '5000 - 10000', min: 5000, max: 10000, count: 0 },
+        { range: '10000 - 20000', min: 10000, max: 20000, count: 0 },
+        { range: '20000+', min: 20000, max: Infinity, count: 0 }
+    ];
+
+    this.extractedData.forEach(item => {
+        const grandTotal = item.GrandTotal;
+        for (const range of priceRanges) {
+            if (grandTotal >= range.min && grandTotal < range.max) {
+                range.count++;
+                break;
+            }
+        }
+    });
+
+    const categoriesPrice = priceRanges.map(range => range.range);
+    const dataPrice = priceRanges.map(range => range.count);
+
+    this.invoiceAmountDistribution = {
+        series: [{ name: 'Invoices', data: dataPrice }],
+        chart: { type: 'heatmap', height: 350 },
+        xaxis: { categories: categoriesPrice, title: { text: 'Price in ₹' } }
+    };
+}
+
+
 
   fetchTableData() {
     // Prepare the data with additional formatting for dates and amounts
@@ -261,314 +521,6 @@ export class InsightsComponent {
     return new Date(year, month, day);
   }
 
-
-  initializeCharts(data: any) {
-    console.log("data:", data);
-    this.pdfResponse = data.records.map((record: any) => {
-      if (typeof record.jsoNcontent === 'string') {
-        try {
-
-          record.jsoNcontent = JSON.parse(record.jsoNcontent);
-        } catch (error) {
-          console.error('Error parsing JSON content:', error);
-        }
-      }
-      return record;
-    });
-    this.extractValues();
-
-    // Sort data by OrderDate (latest first, considering year and month)
-    this.extractedData.sort((a, b) => {
-      // Convert OrderDate to Date object
-      const dateA = this.parseDate(a.OrderDate);
-      const dateB = this.parseDate(b.OrderDate);
-
-      // Compare year first, then month
-      if (dateB.getFullYear() !== dateA.getFullYear()) {
-        return dateB.getFullYear() - dateA.getFullYear(); // Sort by year
-      }
-      return dateB.getMonth() - dateA.getMonth(); // Sort by month
-    });
-    this.calculateTotalGrandTotal();
-
-
-    // Flatten the PdfValues arrays into a single array
-    const totalFilesProcessed = this.pdfResponse.length; // Or any other way to calculate total files processed
-    this.generateConfidenceChart(totalFilesProcessed, this.pdfResponse);
-
-// Step 1: Extract and sum the GrandTotal and TotalTaxAmount values
-let totalGrandTotal = 0;
-let totalTaxAmount = 0;
-
-this.pdfResponse.forEach(j => {
-  j.jsoNcontent.PdfValues.forEach(i => {
-    if (i.FieldName === 'GrandTotal' && i.FieldValue !== null) {
-      const grandTotalValue = i.FieldValue ? i.FieldValue.replace(/₹|,/g, '') : '0';
-      totalGrandTotal += parseFloat(grandTotalValue); // Safely parse the value
-    }
-    if (i.FieldName === 'TotalTaxAmount' && i.FieldValue !== null) {
-      const taxAmountValue = i.FieldValue ? i.FieldValue.replace(/₹|,/g, '') : '0';
-      totalTaxAmount += parseFloat(taxAmountValue);
-      this.totalTaxAmountShown = totalTaxAmount// Safely parse the value
-    }
-  });
-});
-
-// Step 2: Calculate the percentage of TotalTaxAmount out of GrandTotal
-const taxPercentageOfGrandTotal = (totalTaxAmount / totalGrandTotal) * 100;
-
-// Step 3: Format values to two decimal places
-const formattedTaxAmount = parseFloat(totalTaxAmount.toFixed(2));
-let formattedGrandTotal = totalGrandTotal - formattedTaxAmount;
-formattedGrandTotal = parseFloat(formattedGrandTotal.toFixed(2));
-
-// Step 4: Create the chart and display the relevant information
-this.invoiceDistributionChart = {
-  series: [formattedGrandTotal, formattedTaxAmount], // Series with the sum of GrandTotal and TotalTaxAmount
-  chart: {
-    type: 'pie',
-    height: 350
-  },
-  labels: ['Net Total', 'Total Tax Amount'], // Labels for the chart
-  title: {
-    text: `Invoice Amount Distribution: Total Tax Amount is ${taxPercentageOfGrandTotal.toFixed(2)}% of Grand Total`
-  },
-  responsive: [
-    {
-      breakpoint: 480,
-      options: {
-        chart: {
-          width: 200
-        },
-        legend: {
-          position: 'bottom'
-        }
-      }
-    }
-  ]
-};
-
-
-    this.paidUnpaidInvoices = {
-      series: [60, 40],
-      chart: {
-        type: 'radialBar',
-        height: 350
-      },
-      labels: ['Paid', 'Unpaid'],
-      title: {
-        text: 'Paid vs. Unpaid Invoices'
-      }
-    };
-
-
-
-    this.processingSuccessFail = {
-      series: this.successfulFiles || this.failedFiles ? [this.successfulFiles, this.failedFiles]: [],
-      chart: {
-        type: 'donut'
-      },
-      labels: ['Successful', 'Failed'],
-      responsive: [
-        {
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 200
-            },
-            legend: {
-              position: 'bottom'
-            }
-          }
-        }
-      ]
-    };
-
-    this.processingTimeDistribution = {
-      series: [{
-        name: 'Processing Time',
-        data: [20, 25, 30, 35, 28, 45, 60] // Example processing times in seconds
-      }],
-      chart: {
-        type: 'line',
-        height: 350
-      },
-      xaxis: {
-        categories: ['File1', 'File2', 'File3', 'File4', 'File5', 'File6', 'File7']
-      },
-      title: {
-        text: 'Processing Time Distribution'
-      }
-    };
-
-    this.extractedData.forEach((item) => {
-      const orderDate = this.parseDate(item.OrderDate);
-      const grandTotal = parseFloat(item.GrandTotal);
-
-      // Get the month index (0 for January, 11 for December)
-      const monthIndex = orderDate.getMonth();
-
-      // Accumulate the grand total for the corresponding month
-      this.monthlyExpenses[monthIndex] += grandTotal;
-    });
-
-    const formattedMonthlyExpenses = this.monthlyExpenses.map(expense => parseFloat(expense.toFixed(2)));
-
-
-    // Now that we have the monthly expenses, update the chart data
-    this.monthlyExpensesChart = {
-      series: [{
-        name: 'Expenses',
-        data: formattedMonthlyExpenses ? formattedMonthlyExpenses : []// Use the calculated monthly expenses
-      }],
-      chart: {
-        type: 'line',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      }
-    };
-
-
-    const vendorTotals: { [key: string]: number } = {};
-
-    // Iterate through the extracted data
-    this.extractedData.forEach((item) => {
-      const SoldByName = item.SoldByName;
-      const grandTotal = parseFloat(item.GrandTotal) || 0;
-
-      // Accumulate the grand total for each BillToName
-      if (vendorTotals[SoldByName]) {
-        vendorTotals[SoldByName] += grandTotal;
-      } else {
-        vendorTotals[SoldByName] = grandTotal;
-      }
-    });
-
-    const vendorLabels = Object.keys(vendorTotals); // BillToName values
-    const vendorData = Object.values(vendorTotals).map(total => parseFloat(total.toFixed(2))); // Corresponding GrandTotal values
-
-    // Now that we have the totals, update the pie chart data
-    this.topVendors = {
-      series: vendorData, // Use the accumulated GrandTotal values
-      chart: {
-        type: 'pie',
-        height: 450
-      },
-      labels: vendorLabels, // Use the BillToName values as labels
-      responsive: [
-        {
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 300,
-            },
-            legend: {
-              position: 'bottom'
-            }
-          }
-        }
-      ]
-    };
-
-    this.extractedData.forEach((item) => {
-      const orderDate = this.parseDate(item.OrderDate);
-      const formattedDate = this.formatDateForChart(orderDate);
-
-      // Increment the count for the formatted date
-      if (this.invoiceCountsByDate[formattedDate]) {
-        this.invoiceCountsByDate[formattedDate]++;
-      } else {
-        this.invoiceCountsByDate[formattedDate] = 1;
-      }
-    });
-
-    this.calculateTotalGrandTotal();
-
-    // Generate categories and data arrays for the chart
-    const categories: string[] = [];
-    const datedata: number[] = [];
-
-    // Convert keys to date objects, sort them, and then generate sorted categories and data
-    const sortedDates = Object.keys(this.invoiceCountsByDate)
-      .map(date => {
-        // Convert the formatted date string (DD-MM-YY) back to a Date object
-        const [day, month, year] = date.split('-');
-        const fullYear = parseInt(year, 10) + 2000; // Convert two-digit year to full year
-        return {
-          date,
-          count: this.invoiceCountsByDate[date],
-          parsedDate: new Date(fullYear, parseInt(month, 10) - 1, parseInt(day, 10))
-        };
-      })
-      .sort((a, b) => b.parsedDate.getTime() - a.parsedDate.getTime()); // Sort dates from latest to earliest
-
-    // Fill categories and data arrays based on sorted dates
-    sortedDates.forEach(({ date, count }) => {
-      categories.push(date);
-      datedata.push(count);
-    });
-
-    // Update the chart configuration
-    this.invoiceCountByDate = {
-      series: [{
-        name: 'Invoices',
-        data: datedata // Use the calculated invoice counts
-      }],
-      chart: {
-        type: 'heatmap',
-        height: 350
-      },
-      xaxis: {
-        categories: categories, // Use the sorted formatted dates as categories
-        title: {
-          text: 'Date (DD-MM-YY)' // Display date with day, month, and last two digits of year
-        }
-      }
-    };
-
-
-    const priceRanges = [
-      { range: '0 - 1000', min: 0, max: 1000, count: 0 },
-      { range: '1000 - 5000', min: 1000, max: 5000, count: 0 },
-      { range: '5000 - 10000', min: 5000, max: 10000, count: 0 },
-      { range: '10000 - 20000', min: 10000, max: 20000, count: 0 },
-      { range: '20000+', min: 20000, max: Infinity, count: 0 }
-    ];
-    this.extractedData.forEach((item) => {
-      const grandTotal = item.GrandTotal;
-
-      // Find the appropriate range and increment its count
-      for (const range of priceRanges) {
-        if (grandTotal >= range.min && grandTotal < range.max) {
-          range.count++;
-          break;
-        }
-      }
-    });
-
-    const categoriesPrice: string[] = priceRanges.map(range => range.range);
-    const dataPrice: number[] = priceRanges.map(range => range.count);
-
-    this.invoiceAmountDistribution = {
-      series: [{
-        name: 'Invoices',
-        data: dataPrice ? dataPrice : []// Example invoice counts
-      }],
-      chart: {
-        type: 'heatmap',
-        height: 350
-      },
-      xaxis: {
-        categories: categoriesPrice,
-        title: {
-          text: 'Price in ₹'
-        }
-      }
-    };
-  }
-
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Recent Transactions');
@@ -609,7 +561,7 @@ mergedCells.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'E5E5E5' } // Light gray background
+        fgColor: { argb: 'D3D3D3' } // Light gray background
       };
       cell.border = {
         bottom: { style: 'thin' }
@@ -798,5 +750,44 @@ exportDivsToPdf(): void {
   });
 }
 
+getQuarterLabel(date: Date): string {
+  const month = date.getMonth() + 1; // Months are 0-indexed
+  const year = date.getFullYear();
+  let range = '';
 
+  if (month <= 3) {
+    range = 'Jan-Mar';
+  } else if (month <= 6) {
+    range = 'Apr-Jun';
+  } else if (month <= 9) {
+    range = 'Jul-Sep';
+  } else {
+    range = 'Oct-Dec';
+  }
+
+  return `${range}:${year}`;
+}
+
+parseDateforChart(dateString: string): Date {
+  const [day, month, year] = dateString.split('.').map(Number);
+  return new Date(year, month - 1, day); // Months are 0-indexed
+}
+
+getQuarterforCharts(date: Date): string {
+  const month = date.getMonth() + 1; // Months are 0-indexed
+  const year = date.getFullYear().toString().slice(-2);
+  let range = '';
+
+  if (month <= 3) {
+    range = 'Jan-Mar';
+  } else if (month <= 6) {
+    range = 'Apr-Jun';
+  } else if (month <= 9) {
+    range = 'Jul-Sep';
+  } else {
+    range = 'Oct-Dec';
+  }
+
+  return `${range}:${year}`;
+}
 }
