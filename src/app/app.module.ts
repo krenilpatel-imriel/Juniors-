@@ -16,7 +16,13 @@ import { InsightsComponent } from './dashboard-Managment/insights/insights.compo
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -29,14 +35,22 @@ import { HttpClientModule } from '@angular/common/http';
     ContactComponent,
     LandingPageComponent,
     DocumentationComponent,
-    InsightsComponent
+    InsightsComponent,
+
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FontAwesomeModule,
     NgApexchartsModule,
-    HttpClientModule
+    HttpClientModule,
+    BrowserAnimationsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [],

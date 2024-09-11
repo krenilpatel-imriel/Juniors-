@@ -1,3 +1,22 @@
 .print-pdf{
     flex-direction: row;
 }
+
+
+.order-date {
+  margin-right: 20px; /* Adjust as needed */
+}
+
+.grand-total {
+  margin-left: 20px;
+}
+
+.table-row-height td {
+  padding: 5px;
+}
+
+th.mat-header-cell, td.mat-cell, td.mat-footer-cell {
+  padding: 0;
+  border-bottom-width: 0px !important;
+   border-bottom-style: solid;
+}

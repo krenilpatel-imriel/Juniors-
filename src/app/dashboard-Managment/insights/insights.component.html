@@ -19,7 +19,6 @@
         <p class="text-gray-500">This metric shows the total number of files processed over the selected period. Use
           this to gauge the overall volume of work handled by the system.</p>
       </div>
-      <button (click)="exportDivsToPdf()">Export to PDF</button>
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-1/2 bg-white shadow-sm rounded-lg p-4">
@@ -154,55 +153,92 @@
 
   <!-- Recent Transactions -->
   <div class="mb-8 bg-white shadow-md rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+    <div class="flex justify-between mb-4">
+    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
       <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16m-7 5h7"></path>
       </svg>
       Recent Transactions
     </h2>
+    <!-- Export to Excel Button -->
+    <div class="text-right flex gap-x-4 align-middle items-center">
+      <button (click)="exportToExcel()" class="border-2  text-green-700 border-green-700 font-medium hover:bg-green-700 hover:text-white hover:border-green-700 duration-300 px-4 rounded py-2">
+        Export Table to Excel
+      </button>
+      <button (click)="exportDivsToPdf()" class="border-2  text-red-700 border-red-700 font-medium hover:bg-red-700 hover:text-white hover:border-red-700 duration-300 px-4 rounded py-2">Export Charts to PDF</button>
+    </div>
+  </div>
+
     <p class="text-gray-600 mb-6">
       Keep track of the most recent transactions to stay updated with the latest financial activities. This section
       provides a quick overview of recent transaction data.
     </p>
     <div class="bg-white shadow-sm rounded-lg p-4">
-      <table class="w-full text-left text-gray-700">
-        <thead class="bg-gray-200 text-gray-600">
-          <tr>
-            <th class="py-2 px-4">File No.</th>
-            <th class="py-2 px-4">FileName</th>
-            <th class="py-2 px-4">Order Id</th>
-            <th class="py-2 px-4">Product</th>
-            <th class="py-2 px-4">Vendor</th>
-            <th class="py-2 px-4">Date</th>
-            <th class="py-2 px-4">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of extractedData; let idx = index" class="border-b">
-            <td class="py-4 px-4">F{{idx + 1}}</td>
-            <td class="py-4 px-4">{{productsWithFileNames[idx].fileName}}</td>
-            <td class="py-4 px-4">{{ row.OrderNo || 'N/A' }}</td>
-            <td class="py-4 px-6">{{productsWithFileNames[idx].productName}}</td>
-            <td class="py-4 px-4">{{ row.SoldByName || 'N/A' }}</td>
-            <td class="py-4 px-4">{{ row.OrderDate || 'N/A' }}</td>
-            <td class="py-4 px-4 text-green-600 font-semibold">₹{{ row.GrandTotal || 'N/A' }}</td>
-          </tr>
-        </tbody>
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 w-full text-left text-gray-700 text-3xl">
+
+        <!-- File No. Column -->
+        <ng-container matColumnDef="fileNo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 text-[0.85rem] text-center font-bold text-gray-800"> File No. </th>
+          <td mat-cell *matCellDef="let element; let idx = index" class="py-2 text-center"> F{{ element.id }} </td>
+        </ng-container>
+
+        <!-- FileName Column -->
+        <ng-container matColumnDef="fileName">
+          <th mat-header-cell *matHeaderCellDef class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> FileName </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4"> {{ element.fileName || 'Unknown' }} </td>
+        </ng-container>
+
+        <!-- Order Id Column -->
+        <ng-container matColumnDef="orderNo">
+          <th mat-header-cell *matHeaderCellDef class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> Order Id </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4"> {{ element.OrderNo || 'N/A' }} </td>
+        </ng-container>
+
+        <!-- Product Column (Reduced Width) -->
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> Product </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4 w-2/6"> {{ element.productName || 'Unknown Product' }} </td>
+        </ng-container>
+
+        <!-- Vendor Column -->
+        <ng-container matColumnDef="soldByName">
+          <th mat-header-cell *matHeaderCellDef class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> Vendor </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4"> {{ element.SoldByName || 'N/A' }} </td>
+        </ng-container>
+
+        <!-- Date Column (Added Margin for Space) -->
+        <ng-container matColumnDef="orderDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> Date </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4 order-date"> {{ element.OrderDate || 'N/A' }} </td>
+        </ng-container>
+
+        <!-- Amount Column (Added Margin for Space) -->
+        <ng-container matColumnDef="grandTotal">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="py-2 px-4 text-[0.85rem] text-center font-bold text-gray-800"> Amount </th>
+          <td mat-cell *matCellDef="let element" class="py-2 px-4 text-green-600 font-medium grand-total"> ₹{{ element.GrandTotal || 'N/A' }} </td>
+        </ng-container>
+
+        <!-- Table Header and Row Declarations -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-200 text-gray-600"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="border-b table-row-height"></tr>
       </table>
+
+      <!-- Pagination -->
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
 
       <!-- Display total GrandTotal at the bottom -->
       <div class="mt-4 text-right">
         <p class="text-lg font-semibold">Grand Total: ₹{{ totalGrandTotal | number:'1.2-2' }}</p>
       </div>
-
-      <!-- Export to Excel Button -->
-      <div class="mt-4 text-right">
-        <button (click)="exportToExcel()" class="bg-blue-500 text-white px-4 py-2 rounded">
-          Export to Excel
-        </button>
-      </div>
     </div>
+
+
+    <div *ngIf="!dataSource?.data?.length" class="text-center py-8 text-gray-500">
+      No records found.
+    </div>
+
+
   </div>
 </div>
 <div class="print-pdf">

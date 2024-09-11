@@ -1,0 +1,8 @@
+/* Add this CSS to your global stylesheet or Tailwind configuration */
+.sidebar {
+  position: fixed; /* Fixes the sidebar position */
+  top: 60px;
+  left: 0;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevents scrolling */
+}

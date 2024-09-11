@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FileResponse, PdfResponse } from 'src/app/Models/fileResponseModel';
 import { FileUploadService } from 'src/app/services/fileUpload.service';
 import html2canvas from 'html2canvas';
@@ -20,6 +20,9 @@ import {
   ApexGrid
 } from 'ng-apexcharts';
 import * as ExcelJS from 'exceljs';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 
 
 @Component({
@@ -58,13 +61,18 @@ export class InsightsComponent {
   invoiceDistributionChart: any = [];
   amountInWordsChart: any = [];
   extractedData: any[] = [];
-  productsWithFileNames: { fileName: any, productName: any }[] = [];  
+  extractedDataforTable: any[] = []
+  productsWithFileNames: { fileName: any, productName: any }[] = [];
   totalGrandTotal: number = 0;
   monthlyExpenses = new Array(12).fill(0);
   invoiceCountsByDate: { [key: string]: number } = {};
   invoiceCategories: string[] = [];
   totalTaxAmountShown : number = 0;
-  
+  displayedColumns: string[] = ['fileNo', 'fileName', 'orderNo', 'product', 'soldByName', 'orderDate', 'grandTotal'];
+  dataSource = new MatTableDataSource<any>([]);
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(private fileService: FileUploadService) {
 
@@ -77,14 +85,95 @@ export class InsightsComponent {
 
   }
 
-  ngOnInit(): void {
+  fetchTableData() {
+    // Prepare the data with additional formatting for dates and amounts
+    const data = this.extractedDataforTable.map((row, idx) => {
+      let formattedGrandTotal = 0;
+
+      if (row.GrandTotal) {
+        // Check if GrandTotal is a string, if so, remove currency symbols and commas
+        if (typeof row.GrandTotal === 'string') {
+          formattedGrandTotal = Number(row.GrandTotal.replace(/[^0-9.-]+/g, '')) || 0;
+        } else {
+          // If it's already a number, just use it
+          formattedGrandTotal = row.GrandTotal;
+        }
+      }
+
+      // Format the date (assumes DD.MM.YYYY format in OrderDate)
+      let formattedOrderDate = row.OrderDate;
+      if (row.OrderDate) {
+        const dateParts = row.OrderDate.split('.');
+        if (dateParts.length === 3) {
+          // Convert to YYYY-MM-DD for better date handling
+          formattedOrderDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+        }
+      }
+
+      return {
+        ...row,
+        fileName: this.productsWithFileNames[idx]?.fileName || 'Unknown',
+        productName: this.productsWithFileNames[idx]?.productName || 'Unknown',
+        GrandTotal: formattedGrandTotal,
+        OrderDate: formattedOrderDate
+      };
+    });
+
+    // Sort data by date in descending order
+    data.sort((a, b) => {
+      const dateA = new Date(a.OrderDate);
+      const dateB = new Date(b.OrderDate);
+      return dateB.getTime() - dateA.getTime(); // Latest date first
+    });
+
+    // Update the data source and paginator after data is processed
+    this.dataSource.data = data;
+    this.sortTableValues();
+    // Calculate total GrandTotal from formatted values
+    this.totalGrandTotal = data.reduce((acc, row) => acc + (row.GrandTotal || 0), 0);
+
+    console.log(this.productsWithFileNames);
+    console.log(this.dataSource.data);
   }
+
+
+
+
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+
+
+  sortTableValues() {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+
+    this.dataSource.sortingDataAccessor = (item, property) => {
+      switch (property.toLowerCase()) {
+        case 'grandtotal':
+          return item.GrandTotal || 0; // Numeric sorting
+        case 'orderdate':
+          const dateParts = item.OrderDate?.split('-'); // Assuming 'YYYY-MM-DD' format
+          return dateParts ? new Date(dateParts[0], dateParts[1] - 1, dateParts[2]) : new Date(0);
+        default:
+          return item[property];
+      }
+    };
+  }
+
+
+
   extractValues() {
-    this.extractedData = []; 
+    this.extractedData = [];
 
     this.pdfResponse.forEach((record: any) => {
-      const fileName = record.jsoNfilename || 'Unknown'; 
-    
+      const fileName = record.jsoNfilename || 'Unknown';
+
       record.jsoNcontent.Tables[0].Cells.forEach((cell: any) => {
           if (cell.Kind === 'content' && cell.ColumnIndex === 1 && cell.RowIndex === 1) {
             const productName = cell.Content.split('|')[0];
@@ -92,18 +181,19 @@ export class InsightsComponent {
           }
         });
       });
-    console.log("products with files", this.productsWithFileNames); 
+    console.log("products with files", this.productsWithFileNames);
 
 
     this.pdfResponse.forEach((record: PdfResponse) => {
       const extractedRow: any = {};
-
+      extractedRow.id = record.id;
       record.jsoNcontent.PdfValues.forEach((pdfValue: any) => {
         const field = pdfValue.FieldName;
         const value = pdfValue.FieldValue;
 
         if (value !== null) {
           switch (field) {
+
             case 'GrandTotal':
 
               const parsedValue = parseFloat(value.replace(/₹|,/g, ''));
@@ -128,12 +218,13 @@ export class InsightsComponent {
 
       // Push the extracted row to the array
       this.extractedData.push(extractedRow);
+      this.extractedDataforTable= this.extractedData;
       this.totalFilesProcessed = this.extractedData.length;
-
       this.totalFilesProcessed = this.totalFilesProcessed;
       this.successfulFiles = this.totalFilesProcessed;;
       this.failedFiles = 0;
     });
+    this.fetchTableData();
   }
 
   calculateTotalGrandTotal() {
@@ -151,8 +242,11 @@ export class InsightsComponent {
   formatDateForChart(date: Date): string {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
-    return `${day}-${month}`;
+    const year = date.getFullYear().toString().slice(-2); // Get the last two digits of the year
+    return `${day}-${month}-${year}`; // Format as DD-MM-YY
   }
+
+
 
 
 
@@ -197,7 +291,7 @@ export class InsightsComponent {
     });
     this.calculateTotalGrandTotal();
 
-    
+
     // Flatten the PdfValues arrays into a single array
     const totalFilesProcessed = this.pdfResponse.length; // Or any other way to calculate total files processed
     this.generateConfidenceChart(totalFilesProcessed, this.pdfResponse);
@@ -214,7 +308,7 @@ this.pdfResponse.forEach(j => {
     }
     if (i.FieldName === 'TotalTaxAmount' && i.FieldValue !== null) {
       const taxAmountValue = i.FieldValue ? i.FieldValue.replace(/₹|,/g, '') : '0';
-      totalTaxAmount += parseFloat(taxAmountValue); 
+      totalTaxAmount += parseFloat(taxAmountValue);
       this.totalTaxAmountShown = totalTaxAmount// Safely parse the value
     }
   });
@@ -391,33 +485,49 @@ this.invoiceDistributionChart = {
     });
 
     this.calculateTotalGrandTotal();
+
     // Generate categories and data arrays for the chart
     const categories: string[] = [];
     const datedata: number[] = [];
 
-    // Fill categories and data arrays
-    Object.keys(this.invoiceCountsByDate).sort().forEach(date => {
+    // Convert keys to date objects, sort them, and then generate sorted categories and data
+    const sortedDates = Object.keys(this.invoiceCountsByDate)
+      .map(date => {
+        // Convert the formatted date string (DD-MM-YY) back to a Date object
+        const [day, month, year] = date.split('-');
+        const fullYear = parseInt(year, 10) + 2000; // Convert two-digit year to full year
+        return {
+          date,
+          count: this.invoiceCountsByDate[date],
+          parsedDate: new Date(fullYear, parseInt(month, 10) - 1, parseInt(day, 10))
+        };
+      })
+      .sort((a, b) => b.parsedDate.getTime() - a.parsedDate.getTime()); // Sort dates from latest to earliest
+
+    // Fill categories and data arrays based on sorted dates
+    sortedDates.forEach(({ date, count }) => {
       categories.push(date);
-      datedata.push(this.invoiceCountsByDate[date]);
+      datedata.push(count);
     });
 
     // Update the chart configuration
     this.invoiceCountByDate = {
       series: [{
         name: 'Invoices',
-        data: datedata ? datedata : [] // Use the calculated invoice counts
+        data: datedata // Use the calculated invoice counts
       }],
       chart: {
         type: 'heatmap',
         height: 350
       },
       xaxis: {
-        categories: categories, // Use the formatted dates as categories
+        categories: categories, // Use the sorted formatted dates as categories
         title: {
-          text: 'Date (DD/MM)' 
+          text: 'Date (DD-MM-YY)' // Display date with day, month, and last two digits of year
         }
       }
     };
+
 
     const priceRanges = [
       { range: '0 - 1000', min: 0, max: 1000, count: 0 },
@@ -453,114 +563,8 @@ this.invoiceDistributionChart = {
       xaxis: {
         categories: categoriesPrice,
         title: {
-          text: 'Price in ₹' 
+          text: 'Price in ₹'
         }
-      }
-    };
-
-    this.paidUnpaidInvoices = {
-      series: [60, 40],
-      chart: {
-        type: 'radialBar',
-        height: 350
-      },
-      labels: ['Paid', 'Unpaid'],
-      title: {
-        text: 'Paid vs. Unpaid Invoices'
-      }
-    };
-
-    this.latePayments = {
-      series: [{
-        name: 'Late Payments',
-        data: [2, 5, 3, 4, 6, 8, 7] // Example data
-      }],
-      chart: {
-        type: 'bar',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-      },
-      title: {
-        text: 'Late Payments by Month'
-      }
-    };
-
-    this.vendorPaymentTrends = {
-      series: [{
-        name: 'Vendor A',
-        data: [3000, 3200, 3100, 3300, 3400, 3500, 3600] // Example data
-      }, {
-        name: 'Vendor B',
-        data: [2500, 2700, 2600, 2800, 2900, 3000, 3100]
-      }],
-      chart: {
-        type: 'line',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-      },
-      title: {
-        text: 'Vendor Payment Trends'
-      }
-    };
-
-    this.vendorReliability = {
-      series: [{
-        name: 'On-time Payments',
-        data: [80, 70, 90, 85, 75, 95, 90]
-      }, {
-        name: 'Invoice Accuracy',
-        data: [70, 75, 85, 80, 90, 95, 85]
-      }, {
-        name: 'Issues',
-        data: [2, 3, 1, 4, 2, 1, 3]
-      }],
-      chart: {
-        type: 'radar',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Vendor A', 'Vendor B', 'Vendor C', 'Vendor D', 'Vendor E', 'Vendor F', 'Vendor G']
-      },
-      title: {
-        text: 'Vendor Reliability'
-      }
-    };
-
-    this.expenseAnomalies = {
-      series: [{
-        name: 'Expenses',
-        data: [12000, 13000, 11000, 14000, 11500, 12800, 16000] // Example data
-      }],
-      chart: {
-        type: 'scatter',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-      },
-      title: {
-        text: 'Expense Anomalies'
-      }
-    };
-
-    this.expenseForecasting = {
-      series: [{
-        name: 'Expenses',
-        data: [12000, 13000, 11000, 14000, 11500, 12800, 16000] // Example data
-      }],
-      chart: {
-        type: 'line',
-        height: 350
-      },
-      xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
-      },
-      title: {
-        text: 'Expense Forecasting'
       }
     };
   }
@@ -568,25 +572,36 @@ this.invoiceDistributionChart = {
   async exportToExcel(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Recent Transactions');
-  
-    // Add super header row
-    const superHeader = worksheet.addRow(['VIEWVOICE']);
-    superHeader.getCell(1).font = { bold: true, color: { argb: 'FFFFFF' } };
-    superHeader.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-    superHeader.getCell(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '3B82F6' } // Light blue background
-    };
-    superHeader.height = 40; // Adjust row height for super header
-    worksheet.mergeCells('A1:G1'); // Merge cells for the super header
-  
+
+ // Add super header row
+const superHeader = worksheet.addRow(['VIEWVOICE']);
+
+// Set font, alignment, and fill properties for the super header cell
+const superHeaderCell = superHeader.getCell(1);
+superHeaderCell.font = { bold: true, color: { argb: 'FFFFFF' } };
+superHeaderCell.fill = {
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: '3B82F6' } // Light blue background
+};
+
+// Adjust row height for super header
+superHeader.height = 40;
+
+// Merge cells for the super header
+worksheet.mergeCells('A1:G1');
+
+// Center the content of the merged cells
+const mergedCells = worksheet.getCell('A1');
+mergedCells.alignment = { horizontal: 'center', vertical: 'middle' };
+
+
     // Define the header
     const header = ['File No.', 'FileName', 'Order Id', 'Product', 'Vendor', 'Date', 'Amount'];
-  
+
     // Add header row
     const headerRow = worksheet.addRow(header);
-  
+
     // Apply header styling (light gray background and text color)
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       cell.font = { bold: true, color: { argb: '4B4B4B' } }; // Gray text color
@@ -600,11 +615,11 @@ this.invoiceDistributionChart = {
         bottom: { style: 'thin' }
       };
     });
-  
+
     // Prepare the data rows
     this.extractedData.forEach((row, idx) => {
       const dataRow = worksheet.addRow([
-        `F${idx + 1}`, // File No.
+        `F${row.id}`, // File No.
         this.productsWithFileNames[idx]?.fileName || 'Unknown', // FileName
         row.OrderNo || 'N/A', // Order Id
         this.productsWithFileNames[idx]?.productName || 'N/A', // Product
@@ -612,11 +627,11 @@ this.invoiceDistributionChart = {
         row.OrderDate || 'N/A', // Date
         `₹${row.GrandTotal || 'N/A'}` // Amount
       ]);
-  
+
       // Make amount values bold and green
       dataRow.getCell(7).font = { bold: true, color: { argb: '008000' } }; // Green color for Amount
     });
-  
+
     // Add the total row
     const totalRow = worksheet.addRow([
       '', // Empty cell for File No.
@@ -627,10 +642,10 @@ this.invoiceDistributionChart = {
       '', // Empty cell for Date
       `Grand Total: ₹${this.totalGrandTotal.toFixed(2)}` // Amount
     ]);
-  
+
     // Make grand total bold
     totalRow.getCell(7).font = { bold: true };
-  
+
     // Apply styling to all rows (make the rest of the rows white)
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       row.height = 35; // Increase row height
@@ -651,7 +666,7 @@ this.invoiceDistributionChart = {
         };
       });
     });
-  
+
     // Set column widths
     worksheet.getColumn(1).width = 15; // File No.
     worksheet.getColumn(2).width = 30; // FileName
@@ -660,7 +675,7 @@ this.invoiceDistributionChart = {
     worksheet.getColumn(5).width = 30; // Vendor
     worksheet.getColumn(6).width = 20; // Date
     worksheet.getColumn(7).width = 25; // Amount
-  
+
     // Export the workbook
     await workbook.xlsx.writeBuffer().then((buffer) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -672,11 +687,11 @@ this.invoiceDistributionChart = {
       window.URL.revokeObjectURL(url);
     });
   }
-  
+
 
   generateConfidenceChart(totalFilesProcessed: number, pdfResponse: any[]) {
     // Step 1: Generate confidence labels (L1, L2, L3, ..., L{totalFilesProcessed})
-    const confidenceLabels = Array.from({ length: totalFilesProcessed }, (_, index) => `F${index + 1}`);
+    const confidenceLabels = this.extractedData.map((data: any) => `F${data.id}`); // Ensure `id` exists in `extractedData`
 
     // Step 2: Calculate the average confidence for each file in pdfResponse
     const confidenceData = pdfResponse.map(j => {
@@ -742,7 +757,7 @@ exportDivsToPdf(): void {
   const invoiceDistributionDiv = document.querySelector('.invoice-amount-div') as HTMLElement;
   const expenseOverviewDiv = document.querySelector('.expense-overview-div') as HTMLElement;
   const invoiceDetailsDiv = document.querySelector('.invoice-details-div') as HTMLElement;
-  
+
   const container = document.querySelector('.print-pdf') as HTMLElement;
   container.classList.remove("hidden");
 
@@ -753,10 +768,10 @@ exportDivsToPdf(): void {
 
   html2canvas(container).then(canvas => {
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4'); 
+    const pdf = new jsPDF('p', 'mm', 'a4');
 
-    const imgWidth = 210; 
-    const pageHeight = 295; 
+    const imgWidth = 210;
+    const pageHeight = 295;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let heightLeft = imgHeight;
     let position = 0;
@@ -776,7 +791,7 @@ exportDivsToPdf(): void {
       pdf.addImage(thirdImgData, 'PNG', 0, 0, imgWidth, thirdImgHeight);
 
       pdf.save('viewvoice-report.pdf');
-      
+
       container.classList.add("hidden");
       container.innerHTML = "";
     });
