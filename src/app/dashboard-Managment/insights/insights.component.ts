@@ -156,8 +156,8 @@ initializeInvoiceDistributionChart() {
     this.invoiceDistributionChart = {
         series: [formattedGrandTotal, formattedTaxAmount],
         chart: { type: 'pie', height: 350 },
-        labels: ['Net Total', 'Total Tax Amount'],
-        title: { text: `Invoice Amount Distribution: Total Tax Amount is ${taxPercentageOfGrandTotal.toFixed(2)}% of Grand Total` },
+        labels: ['Net Total Amount', 'Total Tax Amount'],
+        title: { text: `Total Tax Amount is ${taxPercentageOfGrandTotal.toFixed(2)}% of Grand Total` },
         responsive: [{ breakpoint: 480, options: { chart: { width: 200 }, legend: { position: 'bottom' } } }]
     };
 }
@@ -711,44 +711,62 @@ exportDivsToPdf(): void {
   const invoiceDetailsDiv = document.querySelector('.invoice-details-div') as HTMLElement;
 
   const container = document.querySelector('.print-pdf') as HTMLElement;
-  container.classList.remove("hidden");
+  container.classList.remove("hidden"); // Make the container visible
+  container.classList.add("bg-white"); // Ensure container background is white
 
-  container.appendChild(invoiceDistributionDiv.cloneNode(true));
-  container.appendChild(expenseOverviewDiv.cloneNode(true));
+  // Function to style the div and add it to the PDF as an image
+  const addDivToPdf = (div: HTMLElement, pageNum: number, callback: () => void) => {
+      // Clear the container
+      container.innerHTML = '';
+      const clonedDiv = div.cloneNode(true) as HTMLElement;
 
-  console.log(container);
+      // Ensure the div and its children have white backgrounds
+      clonedDiv.style.backgroundColor = 'white';
+      clonedDiv.style.padding = '10px'; // Optional: Add padding for better appearance
 
-  html2canvas(container).then(canvas => {
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
+      // Ensure all child canvas elements have a white background
+      const canvasElements = clonedDiv.querySelectorAll('canvas');
+      canvasElements.forEach(canvas => {
+          (canvas as HTMLCanvasElement).style.backgroundColor = 'white';
+      });
 
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+      container.appendChild(clonedDiv);
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      // Use html2canvas to capture the div
+      html2canvas(container, {
+          backgroundColor: null, // Ensure no additional background is applied
+          scale: 3 // Optional: Increase scale for better resolution
+      }).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = 280; // Full width of A4 in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width; // Calculate image height to maintain aspect ratio
 
-    pdf.addPage();
+          if (pageNum > 1) pdf.addPage(); // Add a new page for each div after the first one
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight); // Add the image to the PDF
 
-    container.innerHTML = '';
-    container.appendChild(invoiceDetailsDiv.cloneNode(true));
+          callback(); // Proceed to the next step after rendering
+      });
+  };
 
-    html2canvas(container).then(thirdCanvas => {
-      const thirdImgData = thirdCanvas.toDataURL('image/png');
-      const thirdImgHeight = (thirdCanvas.height * imgWidth) / thirdCanvas.width;
+  // Create a new PDF document
+  const pdf = new jsPDF('l', 'mm', [210, 297]); // A4 size
 
-      pdf.addImage(thirdImgData, 'PNG', 0, 0, imgWidth, thirdImgHeight);
+  // Add divs to the PDF in sequence
+  addDivToPdf(expenseOverviewDiv, 1, () => {
+      addDivToPdf(invoiceDistributionDiv, 2, () => {
+          addDivToPdf(invoiceDetailsDiv, 3, () => {
+              // Save the PDF after all divs are added
+              pdf.save('viewvoice-report.pdf');
 
-      pdf.save('viewvoice-report.pdf');
-
-      container.classList.add("hidden");
-      container.innerHTML = "";
-    });
+              // Hide the container again and clean up
+              container.classList.add("hidden");
+              container.innerHTML = '';
+          });
+      });
   });
 }
+
+
 
 getQuarterLabel(date: Date): string {
   const month = date.getMonth() + 1; // Months are 0-indexed
