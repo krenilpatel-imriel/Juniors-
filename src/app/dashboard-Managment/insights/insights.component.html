@@ -85,6 +85,14 @@
           [xaxis]="monthlyExpensesChart.xaxis" [title]="monthlyExpensesChart.title"></apx-chart>
         <p class="text-gray-500 mt-2">This chart shows the total expenses per month. It helps in understanding spending
           trends and preparing monthly budgets.</p>
+          <p class="text-gray-500 mt-2">
+            The year is divided into four quarters:
+            Q1: January - March,
+            Q2: April - June,
+            Q3: July - September,
+            Q4: October - December.
+          </p>
+
       </div>
 
       <div class="w-1/2 h-full items-stretch flex flex-col justify-between align-middle shadow-sm rounded-lg">
@@ -121,7 +129,7 @@
     </div>
     <div class="flex flex-col md:flex-row gap-6">
       <div class="w-full bg-white shadow-sm rounded-lg p-4">
-        <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Date</p>
+        <p class="text-gray-800 text-2xl mb-2 font-bold">Invoice Count by Quarter-Year</p>
         <apx-chart [series]="invoiceCountByDate.series" [chart]="invoiceCountByDate.chart"
           [xaxis]="invoiceCountByDate.xaxis" [title]="invoiceCountByDate.title"></apx-chart>
         <p class="text-gray-500 mt-2">Track the number of invoices generated over time. This chart helps in identifying

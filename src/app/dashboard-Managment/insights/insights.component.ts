@@ -191,11 +191,12 @@ initializeMonthlyExpensesChart() {
       const orderDate = this.parseDate(item.OrderDate);
       const grandTotal = parseFloat(item.GrandTotal);
       const quarter = this.getQuarterforCharts(orderDate);
-      const quarterLabel = `${quarter}`; // Include the year in the label
+      const year = orderDate.getFullYear().toString().slice(-2);  // Last two digits of the year
+      const quarterLabel = `${quarter} ${year}`;  // Label format: "Q1 22", "Q2 23", etc.
       quarterlyExpenses[quarterLabel] = (quarterlyExpenses[quarterLabel] || 0) + grandTotal;
   });
 
-  // Sort the quarters by year and quarter
+  // Sort the quarters by year and quarter (calendar order: Q1 -> Q4)
   const sortedQuarterLabels = Object.keys(quarterlyExpenses).sort((a, b) => {
       const [quarterA, yearA] = a.split(' ');
       const [quarterB, yearB] = b.split(' ');
@@ -203,16 +204,18 @@ initializeMonthlyExpensesChart() {
       // Compare years first
       const yearComparison = parseInt(yearA) - parseInt(yearB);
       if (yearComparison !== 0) {
-          return yearComparison;
+          return yearComparison;  // Sort by year
       }
 
-      // Compare quarters if years are the same
-      const quarterOrder: { [key in 'Q1' | 'Q2' | 'Q3' | 'Q4']: number } = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
-      return quarterOrder[quarterA as keyof typeof quarterOrder] - quarterOrder[quarterB as keyof typeof quarterOrder];
+      // Sort quarters by calendar order (Q1 = Jan-Mar, Q2 = Apr-Jun, Q3 = Jul-Sep, Q4 = Oct-Dec)
+      const quarterOrder: { [key: string]: number } = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
+      const quarterComparison = quarterOrder[quarterA] - quarterOrder[quarterB];
+
+      return quarterComparison;
   });
 
   // Prepare the chart data
-  const quarterLabels = sortedQuarterLabels.map(label => label);
+  const quarterLabels = sortedQuarterLabels.map(label => label);  // Labels like "Q1 22", "Q2 23", etc.
   const expenseValues = sortedQuarterLabels.map(label => parseFloat(quarterlyExpenses[label].toFixed(2)));
 
   // Initialize the chart
@@ -224,6 +227,7 @@ initializeMonthlyExpensesChart() {
       tooltip: { y: { formatter: (value: number) => value.toFixed(2) } }
   };
 }
+
 
 
 // Initialize Top Vendors Chart
@@ -275,26 +279,25 @@ initializeInvoiceCountByDateChart() {
 
   // Count invoices by quarter
   this.extractedData.forEach(item => {
-      const orderDate = this.parseDate(item.OrderDate);
-      const quarterLabel = this.getQuarterLabel(orderDate); // Example format: 'Q1 2023'
-      invoiceCountsByQuarter[quarterLabel] = (invoiceCountsByQuarter[quarterLabel] || 0) + 1;
+    const orderDate = this.parseDate(item.OrderDate);
+    const quarterLabel = this.getQuarterLabel(orderDate); // Example format: 'Jan-Mar:2023'
+    invoiceCountsByQuarter[quarterLabel] = (invoiceCountsByQuarter[quarterLabel] || 0) + 1;
   });
 
-  // Sort the quarter labels by year and quarter
+  // Sort the quarter labels by year and quarter range
   const sortedQuarterLabels = Object.keys(invoiceCountsByQuarter).sort((a, b) => {
-      const [quarterA, yearA] = a.split(' '); // e.g., ['Q1', '2023']
-      const [quarterB, yearB] = b.split(' ');
+    const [rangeA, yearA] = a.split(':'); // e.g., ['Jan-Mar', '2023']
+    const [rangeB, yearB] = b.split(':');
 
-      // First sort by year
-      const yearComparison = parseInt(yearA) - parseInt(yearB);
-      if (yearComparison !== 0) {
-          return yearComparison;
-      }
+    // Sort by year first
+    const yearComparison = parseInt(yearA) - parseInt(yearB);
+    if (yearComparison !== 0) {
+      return yearComparison;
+    }
 
-      // If the year is the same, sort by quarter number
-      const quarterOrder: { [key in 'Q1' | 'Q2' | 'Q3' | 'Q4']: number } = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
-
-      return quarterOrder[quarterA as keyof typeof quarterOrder] - quarterOrder[quarterB as keyof typeof quarterOrder];
+    // Sort by quarter range if the year is the same
+    const quarterOrder: { [key: string]: number } = { 'Jan-Mar': 1, 'Apr-Jun': 2, 'Jul-Sep': 3, 'Oct-Dec': 4 };
+    return quarterOrder[rangeA] - quarterOrder[rangeB];
   });
 
   // Map the sorted quarter labels to chart data
@@ -303,13 +306,30 @@ initializeInvoiceCountByDateChart() {
 
   // Set up the chart configuration
   this.invoiceCountByDate = {
-      series: [{ name: 'Invoices', data }],
-      chart: { type: 'bar', height: 350 },
-      xaxis: { categories, title: { text: 'Quarter-Year' } },
-      yaxis: { title: { text: 'Total Invoices' } }
+    series: [{ name: 'Invoices', data }],
+    chart: { type: 'bar', height: 350 },
+    xaxis: { categories, title: { text: 'Quarter-Year' } },
+    yaxis: { title: { text: 'Total Invoices' } }
   };
 }
 
+getQuarterLabel(date: Date): string {
+  const month = date.getMonth() + 1; // Months are 0-indexed
+  const year = date.getFullYear();
+  let range = '';
+
+  if (month <= 3) {
+    range = 'Jan-Mar';
+  } else if (month <= 6) {
+    range = 'Apr-Jun';
+  } else if (month <= 9) {
+    range = 'Jul-Sep';
+  } else {
+    range = 'Oct-Dec';
+  }
+
+  return `${range}:${year}`; // Return format: "Jan-Mar:2023"
+}
 
 
 
@@ -769,44 +789,25 @@ exportDivsToPdf(): void {
 
 
 
-getQuarterLabel(date: Date): string {
-  const month = date.getMonth() + 1; // Months are 0-indexed
-  const year = date.getFullYear();
-  let range = '';
 
-  if (month <= 3) {
-    range = 'Jan-Mar';
-  } else if (month <= 6) {
-    range = 'Apr-Jun';
-  } else if (month <= 9) {
-    range = 'Jul-Sep';
-  } else {
-    range = 'Oct-Dec';
-  }
-
-  return `${range}:${year}`;
-}
 
 parseDateforChart(dateString: string): Date {
   const [day, month, year] = dateString.split('.').map(Number);
   return new Date(year, month - 1, day); // Months are 0-indexed
 }
 
-getQuarterforCharts(date: Date): string {
-  const month = date.getMonth() + 1; // Months are 0-indexed
-  const year = date.getFullYear().toString().slice(-2);
-  let range = '';
+getQuarterforCharts(orderDate: Date): string {
+    const month = orderDate.getMonth();  // getMonth() returns 0 for January, 11 for December
 
-  if (month <= 3) {
-    range = 'Jan-Mar';
-  } else if (month <= 6) {
-    range = 'Apr-Jun';
-  } else if (month <= 9) {
-    range = 'Jul-Sep';
-  } else {
-    range = 'Oct-Dec';
-  }
-
-  return `${range}:${year}`;
+    if (month >= 0 && month <= 2) {
+        return 'Q1';  // January (0) to March (2)
+    } else if (month >= 3 && month <= 5) {
+        return 'Q2';  // April (3) to June (5)
+    } else if (month >= 6 && month <= 8) {
+        return 'Q3';  // July (6) to September (8)
+    } else {
+        return 'Q4';  // October (9) to December (11)
+    }
 }
+
 }
