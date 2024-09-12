@@ -23,6 +23,8 @@ import * as ExcelJS from 'exceljs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 
 
 @Component({
@@ -71,19 +73,41 @@ export class InsightsComponent {
   totalNetAmountShown : number = 0;
   displayedColumns: string[] = ['fileNo', 'fileName', 'orderNo', 'product', 'soldByName', 'orderDate', 'grandTotal'];
   dataSource = new MatTableDataSource<any>([]);
+  loading$!: Observable<boolean>;
+
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  constructor(private fileService: FileUploadService) {
+  constructor(private fileService: FileUploadService,
+    private cdRef: ChangeDetectorRef
+  ) {
+  }
 
-    this.fileService.getDataFromDB().subscribe((data: any) => {
-      if (data) {
-        this.initializeCharts(data);
-        console.log(data);
+  ngOnInit(): void {
+    // Subscribe to the loading observable from the service
+    this.loading$ = this.fileService.loading$;
+
+    // Fetch data when the component initializes
+    this.loadData();
+  }
+
+
+  loadData(): void {
+
+    this.fileService.getDataFromDB().subscribe(
+      (data: any) => {
+        if (data) {
+          console.log( data.records.length);
+          this.fileService.setLoadingState(data.records.length > 0? false  : true);
+          this.initializeCharts(data);
+          console.log('Data:', data);
+        }
+      },
+      (error: any) => {
+        console.error('Error fetching data', error);
       }
-    });
-
+    );
   }
 
 
@@ -727,6 +751,8 @@ mergedCells.alignment = { horizontal: 'center', vertical: 'middle' };
 }
 
 exportDivsToPdf(): void {
+  this.fileService.setLoadingState(true);
+  this.cdRef.detectChanges();  // Trigger change detection to update the spinner
   const invoiceDistributionDiv = document.querySelector('.invoice-amount-div') as HTMLElement;
   const expenseOverviewDiv = document.querySelector('.expense-overview-div') as HTMLElement;
   const invoiceDetailsDiv = document.querySelector('.invoice-details-div') as HTMLElement;
@@ -781,7 +807,10 @@ exportDivsToPdf(): void {
 
               // Hide the container again and clean up
               container.classList.add("hidden");
-              container.innerHTML = '';
+              container.innerHTML = ''
+              ;
+              this.fileService.setLoadingState(false); // Hide spinner after download
+
           });
       });
   });

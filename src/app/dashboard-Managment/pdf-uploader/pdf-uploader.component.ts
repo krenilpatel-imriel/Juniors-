@@ -2,6 +2,7 @@ import { FileResponse } from 'src/app/Models/fileResponseModel';
 import { Component, OnInit } from '@angular/core';
 import { FileUploadService } from 'src/app/services/fileUpload.service';
 import { FileRequestModel } from 'src/app/Models/fileRequestModel';
+import { BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-pdf-uploader',
@@ -16,7 +17,7 @@ export class PDFUploaderComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.files = await this.fileService.getAllFiles();
-  }
+}
 
   async onFileSelected(event: any) {
     const reader = new FileReader();
