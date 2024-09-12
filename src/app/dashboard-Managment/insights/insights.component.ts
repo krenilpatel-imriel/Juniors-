@@ -642,8 +642,9 @@ mergedCells.alignment = { horizontal: 'center', vertical: 'middle' };
 
 
   generateConfidenceChart(totalFilesProcessed: number, pdfResponse: any[]) {
-    // Step 1: Generate confidence labels (L1, L2, L3, ..., L{totalFilesProcessed})
-    const confidenceLabels = this.extractedData.map((data: any) => `F${data.id}`); // Ensure `id` exists in `extractedData`
+    // Step 1: Sort extracted data by `id` in ascending order before generating confidence labels
+    const sortedExtractedData = this.extractedData.sort((a: any, b: any) => a.id - b.id);
+    const confidenceLabels = sortedExtractedData.map((data: any) => `F${data.id}`); // Generate labels like F1, F2, F3, etc.
 
     // Step 2: Calculate the average confidence for each file in pdfResponse
     const confidenceData = pdfResponse.map(j => {
@@ -667,7 +668,7 @@ mergedCells.alignment = { horizontal: 'center', vertical: 'middle' };
         height: 350
       },
       xaxis: {
-        categories: confidenceLabels,  // Generated labels as categories on the x-axis
+        categories: confidenceLabels,  // Sorted labels as categories on the x-axis
         title: {
           text: 'File Names'
         }
