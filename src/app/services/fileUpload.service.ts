@@ -13,7 +13,7 @@ export class FileUploadService {
   apiBaseUrl: string;
 
   // BehaviorSubject to handle loading state
-  private _loading = new BehaviorSubject<boolean>(false);
+  private _loading = new BehaviorSubject<boolean>(true);
   public loading$ = this._loading.asObservable();
 
   constructor(private httpClient: HttpClient) {

@@ -34,6 +34,7 @@ th.mat-header-cell, td.mat-cell, td.mat-footer-cell {
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 /* Spinner container to center it */
